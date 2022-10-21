@@ -1,0 +1,65 @@
+const express = require('express');
+const router = express.Router();
+
+const { VotingQuery } = require('../models');
+const { VotingDetail } = require('../models');
+
+// Voting Query Creation
+router.post('/create', async (req, res) => {
+    try {
+        const votingquery = await VotingQuery.create(req.body);
+        return res.status(201).json({
+            votingquery,
+        });
+    } catch (error) {
+        return res.status(500).json({ error: error.message })
+    }
+});
+// Get Voting Poll Data
+router.get('/projectTitle/:projectTitle', async (req, res) => {
+    try {
+        const votingQueryDetail = await VotingQuery.findOne({
+            where: req.params
+        });
+        return res.status(200).json({ votingQueryDetail });
+    } catch (error) {
+        return res.status(500).send(error.message);
+    }
+});
+// Get Certain User Voting Info
+router.get('/projectTitle/:projectTitle/accountAddress/:userAddress', async (req, res) => {
+    try {
+        const userVotingStatus = await VotingDetail.findOne({
+            where: req.params
+        });
+        return res.status(200).json({ userVotingStatus });
+    } catch (error) {
+        return res.status(500).send(error.message);
+    }
+});
+
+// Save Voting Status
+router.post('/saveUserStatus', async (req, res) => {
+    try {
+        const userVotingStatus = await VotingDetail.findOne({
+            where: {
+                projectTitle: req.body.projectTitle,
+                userAddress: req.body.userAddress,
+            }
+        });
+        if (!userVotingStatus) {
+            const userStatus = await VotingDetail.create(req.body);
+            return res.status(201).json({
+                userStatus
+            });
+        } else {
+            return res.json({
+                statusText: "Exsited"
+            });
+        }
+    } catch (error) {
+        return res.status(500).json({ error: error.message })
+    }
+});
+
+module.exports = router;

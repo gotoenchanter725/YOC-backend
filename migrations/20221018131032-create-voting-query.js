@@ -2,33 +2,49 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Votings', {
+    await queryInterface.createTable('VotingQueries', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      title: {
+      projectTitle: {
         type: Sequelize.STRING
       },
-      user_address: {
+      queryTitle: {
         type: Sequelize.STRING
       },
-      state: {
+      queryContent: {
+        type: Sequelize.STRING
+      },
+      amountAnswer: {
         type: Sequelize.INTEGER
       },
+      answerStr: {
+        type: Sequelize.STRING
+      },
+      totalResult: {
+        type: Sequelize.STRING
+      },
+      votedWeight: {
+        type: Sequelize.FLOAT
+      },
+      startDate: {
+        type: Sequelize.DATE
+      },
+      endDate: {
+        type: Sequelize.DATE
+      },
       createdAt: {
-        allowNull: false,
         type: Sequelize.DATE
       },
       updatedAt: {
-        allowNull: false,
         type: Sequelize.DATE
       }
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Votings');
+    await queryInterface.dropTable('VotingQueries');
   }
 };

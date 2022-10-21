@@ -1,10 +1,13 @@
 const express = require("express");
 const cors = require("cors");
-const router = require('./routes');
+const routes = require('./routes');
+
 const app = express();
 
+const indexRouter = require('./routes');
+const votingRouter = require('./routes/votingRouter');
 var corsOptions = {
-    origin: "http://localhost:8081"
+    origin: "http://localhost:3000"
 };
 
 app.use(cors(corsOptions));
@@ -12,10 +15,12 @@ app.use(cors(corsOptions));
 // parse requests of content-type - application/json
 app.use(express.json());
 
+// parse requests of content-type - application/x-www-form-urlencoded
+app.use(express.urlencoded({ extended: true }));
+
 // simple route
-app.get("/", (req, res) => {
-    res.json({ message: "Welcome to bezkoder application." });
-});
+app.use('/api/', indexRouter);
+app.use('/api/voting', votingRouter);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
