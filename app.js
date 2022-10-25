@@ -4,6 +4,7 @@ require("dotenv").config();
 const app = express();
 
 const indexRouter = require('./routes');
+const projectRouter = require('./routes/projectRouter');
 const votingRouter = require('./routes/votingRouter');
 var corsOptions = {
     origin: "http://localhost:3000"
@@ -20,6 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 // simple route
 app.use('/api/', indexRouter);
 app.use('/api/voting', votingRouter);
+app.use('/api/project', projectRouter);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;

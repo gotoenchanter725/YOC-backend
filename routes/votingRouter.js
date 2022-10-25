@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const { Op } = require('sequelize');
 
 const { VotingQuery } = require('../models');
 const { VotingDetail } = require('../models');
-
 // Voting Query Creation
 router.post('/create', async (req, res) => {
     try {
@@ -19,7 +19,15 @@ router.post('/create', async (req, res) => {
 router.get('/projectTitle/:projectTitle', async (req, res) => {
     try {
         const votingQueryDetail = await VotingQuery.findOne({
-            where: req.params
+            where: {
+                projectTitle: req.params.projectTitle,
+                startDate: {
+                    [Op.lt]: new Date()
+                },
+                endDate: {
+                    [Op.gt]: new Date()
+                }
+            }
         });
         return res.status(200).json({ votingQueryDetail });
     } catch (error) {
@@ -29,10 +37,28 @@ router.get('/projectTitle/:projectTitle', async (req, res) => {
 // Get Certain User Voting Info
 router.get('/projectTitle/:projectTitle/accountAddress/:userAddress', async (req, res) => {
     try {
-        const userVotingStatus = await VotingDetail.findOne({
-            where: req.params
+        const validVotingQuery = await VotingQuery.findOne({
+            where: {
+                projectTitle: req.params.projectTitle,
+                startDate: {
+                    [Op.lt]: new Date()
+                },
+                endDate: {
+                    [Op.gt]: new Date()
+                }
+            },
+            include: [
+                {
+                    model: VotingDetail,
+                    where: {
+                        userAddress: req.params.userAddress
+                    }
+                }
+            ]
         });
-        return res.status(200).json({ userVotingStatus });
+        console.log(validVotingQuery);
+
+        return res.status(200).json({ userVotingStatus: validVotingQuery });
     } catch (error) {
         return res.status(500).send(error.message);
     }
@@ -43,7 +69,7 @@ router.post('/saveUserStatus', async (req, res) => {
     try {
         const userVotingStatus = await VotingDetail.findOne({
             where: {
-                projectTitle: req.body.projectTitle,
+                queryId: req.body.queryId,
                 userAddress: req.body.userAddress,
             }
         });

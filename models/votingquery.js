@@ -24,9 +24,8 @@ module.exports = (sequelize, DataTypes) => {
     //     foreignKey: 'userId',
     //     onDelete: 'CASCADE'
     // })
-    VotingQuery.hasMany(models.VotingDetail, {
-      foreignKey: 'projectTitle'
-    })
+    VotingQuery.belongsTo(models.Project, { foreignKey: 'projectTitle' });
+    VotingQuery.hasMany(models.VotingDetail, { foreignKey: 'queryId' })
   };
   return VotingQuery;
 };

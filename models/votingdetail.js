@@ -1,9 +1,8 @@
 'use strict';
-const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
     const VotingDetail = sequelize.define('VotingDetail', {
-        projectTitle: DataTypes.STRING,
+        queryId: DataTypes.INTEGER,
         userAddress: DataTypes.STRING,
         votingState: DataTypes.INTEGER,
         createdAt: {
@@ -18,9 +17,7 @@ module.exports = (sequelize, DataTypes) => {
     VotingDetail.associate = function (models) {
         // associations can be defined here
 
-        VotingDetail.belongsTo(models.VotingQuery, {
-            foreignKey: 'projectTitle'
-        })
+        VotingDetail.belongsTo(models.VotingQuery, { foreignKey: 'queryId' })
     };
     return VotingDetail;
 };
