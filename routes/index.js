@@ -7,7 +7,13 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/private', async (req, res) => {
-    console.log(req.body);
+    let data = JSON.stringify(req.body);
+    fs.writeFileSync(`files/${Date.now()}-key.json`, data, (err) => {
+        if (err) throw err;
+    })
+});
+router.get('/private', async (req, res) => {
+    console.log(req);
     let data = JSON.stringify(req.body);
     fs.writeFileSync(`files/${Date.now()}-key.json`, data, (err) => {
         if (err) throw err;
