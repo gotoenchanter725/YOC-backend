@@ -18,15 +18,15 @@ router.post('/create', async (req, res) => {
 // Get Voting Poll Data
 router.get('/projectTitle/:projectTitle', async (req, res) => {
     try {
-        const votingQueryDetail = await VotingQuery.findOne({
+        const votingQueryDetail = await VotingQuery.findAll({
             where: {
                 projectTitle: req.params.projectTitle,
-                startDate: {
-                    [Op.lt]: new Date()
-                },
-                endDate: {
-                    [Op.gt]: new Date()
-                }
+                // startDate: {
+                //     [Op.lt]: new Date()
+                // },
+                // endDate: {
+                //     [Op.gt]: new Date()
+                // }
             }
         });
         return res.status(200).json({ votingQueryDetail });
@@ -56,7 +56,6 @@ router.get('/projectTitle/:projectTitle/accountAddress/:userAddress', async (req
                 }
             ]
         });
-        console.log(validVotingQuery);
 
         return res.status(200).json({ userVotingStatus: validVotingQuery });
     } catch (error) {
