@@ -96,6 +96,7 @@ router.get('/queryId/:id', async (req, res) => {
                 }
             ]
         });
+        console.log('votingResult:', votingResult);
 
         return res.status(200).json({ votingResult: votingResult });
     } catch (error) {
