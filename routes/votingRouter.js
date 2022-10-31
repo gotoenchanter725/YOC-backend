@@ -20,14 +20,9 @@ router.get('/projectTitle/:projectTitle', async (req, res) => {
     try {
         const votingQueryDetail = await VotingQuery.findAll({
             where: {
-                projectTitle: req.params.projectTitle,
-                // startDate: {
-                //     [Op.lt]: new Date()
-                // },
-                // endDate: {
-                //     [Op.gt]: new Date()
-                // }
-            }
+                projectTitle: req.params.projectTitle
+            },
+            order: [['endDate', 'ASC']]
         });
         return res.status(200).json({ votingQueryDetail });
     } catch (error) {
@@ -84,6 +79,27 @@ router.post('/saveUserStatus', async (req, res) => {
         }
     } catch (error) {
         return res.status(500).json({ error: error.message })
+    }
+});
+
+// Get Voting Result
+router.get('/queryId/:id', async (req, res) => {
+    try {
+        console.log(req.params);
+        const votingResult = await VotingDetail.findAll({
+            where: {
+                queryId: req.params.id,
+            },
+            include: [
+                {
+                    model: VotingQuery,
+                }
+            ]
+        });
+
+        return res.status(200).json({ votingResult: votingResult });
+    } catch (error) {
+        return res.status(500).send(error.message);
     }
 });
 
