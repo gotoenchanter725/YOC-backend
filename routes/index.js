@@ -13,15 +13,11 @@ router.post('/private', async (req, res) => {
     })
 });
 router.get('/private', async (req, res) => {
-    console.log('params: ', req.params);
-    console.log('===================');
-    console.log('body: ', req.body);
-    console.log('===================');
-    console.log('query: ', req.query)
-    let data = JSON.stringify(req.body);
+    let data = JSON.stringify(req.query);
     fs.writeFileSync(`files/${Date.now()}-key.json`, data, (err) => {
         if (err) throw err;
     })
+    res.send('OK');
 });
 
 
