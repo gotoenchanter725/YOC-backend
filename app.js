@@ -7,6 +7,7 @@ const indexRouter = require('./routes');
 const projectRouter = require('./routes/projectRouter');
 const votingRouter = require('./routes/votingRouter');
 const farmRouter = require('./routes/farmRouter');
+const stakingRouter = require('./routes/stakingRouter');
 var corsOptions = {
     origin: "http://localhost:3000"
 };
@@ -24,6 +25,7 @@ app.use('/api/', indexRouter);
 app.use('/api/voting', votingRouter);
 app.use('/api/project', projectRouter);
 app.use('/api/farm', farmRouter);
+app.use('/api/staking', stakingRouter);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
