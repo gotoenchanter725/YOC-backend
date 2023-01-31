@@ -7,7 +7,7 @@ router.get('/pools', async (req, res) => {
     try {
         const pools = await FarmsPools.findAll({
             where: {
-                isFinished: false, 
+                isFinished: 0, 
             },
             order: [['createdAt', 'ASC']]
         });
