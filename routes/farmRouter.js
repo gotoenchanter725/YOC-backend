@@ -5,13 +5,12 @@ const { FarmsPools } = require('../models');
 
 router.get('/pools', async (req, res) => {
     try {
-        // const pools = await FarmsPools.findAll({
-        //     where: {
-        //         isFinished: 0, 
-        //     },
-        //     order: [['createdAt', 'ASC']]
-        // });
-        const pools = await FarmsPools.findAll();
+        const pools = await FarmsPools.findAll({
+            where: {
+                isFinished: false, 
+            },
+            order: [['createdAt', 'ASC']]
+        });
         return res.status(201).json({
             pools
         });
