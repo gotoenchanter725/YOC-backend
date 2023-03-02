@@ -9,10 +9,28 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
+      high: {
+        type: Sequelize.FLOAT
+      },
+      low: {
+        type: Sequelize.FLOAT
+      },
+      from: {
+        type: Sequelize.FLOAT
+      },
+      to: {
+        type: Sequelize.FLOAT
+      },
       price: {
         type: Sequelize.FLOAT
       },
-      datatime: {
+      fromDate: {
+        type: Sequelize.DATE
+      },
+      toDate: {
+        type: Sequelize.DATE
+      },
+      datetime: {
         type: Sequelize.DATE
       },
       createdAt: {

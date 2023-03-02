@@ -15,8 +15,13 @@ module.exports = (sequelize, DataTypes) => {
   }
   Price.init({
     price: DataTypes.FLOAT,
-    datatime: DataTypes.DATE,
-    createAt: DataTypes.DATE
+    high: DataTypes.FLOAT,
+    low: DataTypes.FLOAT,
+    from: DataTypes.FLOAT,
+    to: DataTypes.FLOAT,
+    fromDate: DataTypes.DATE,
+    toDate: DataTypes.DATE,
+    datetime: DataTypes.DATE,
   }, {
     sequelize,
     modelName: 'Prices',

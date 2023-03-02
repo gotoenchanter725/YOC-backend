@@ -1,7 +1,7 @@
 const { ethers } = require('ethers');
 
 const delay = (ms) => {
-    new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const convertEthToWei = function (eth, decimals) {
@@ -12,8 +12,24 @@ const convertWeiToEth = function (wei, decimals) {
     return ethers.utils.formatUnits(wei, decimals);
 }
 
+const getRPCURL = function () {
+    if (process.env.NODE_ENV == 'development') {
+        return process.env.NET_WORK == "ETH" ? "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161" : "https://data-seed-prebsc-1-s3.binance.org:8545/"
+    } else {
+        return process.env.NET_WORK == "ETH" ? "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161" : "https://bsc-dataseed1.ninicoin.io/"
+    }
+}
+
+const getProvider = function () {
+    const rpc_url = getRPCURL();
+    const provider = new ethers.providers.JsonRpcProvider(rpc_url);
+    return provider;
+}
+
 module.exports = {
     delay, 
     convertEthToWei, 
-    convertWeiToEth
+    convertWeiToEth, 
+    getRPCURL, 
+    getProvider
 }

@@ -1,9 +1,11 @@
 {
   "dependencies": {
     "cors": "^2.8.5",
+    "date-format": "^4.0.14",
     "dotenv": "^16.0.3",
-    "ethers": "^6.0.8",
+    "ethers": "5.7.2",
     "express": "^4.18.1",
+    "lodash": "^4.17.21",
     "morgan": "^1.10.0",
     "mysql": "^2.18.1",
     "mysql2": "^2.3.3",
