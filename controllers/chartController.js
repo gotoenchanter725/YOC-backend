@@ -53,7 +53,7 @@ const storeTVLPer20mins = async () => {
     
     while (true) {
         let t_prices = [], fromDate = new Date();
-        for (let i = 0; i < 1; i++) {
+        for (let i = 0; i < 5; i++) {
             let tPrice = await getTotalUSD()
             console.log("Price:", tPrice);
             console.log(i + 1, +tPrice);
