@@ -11,7 +11,7 @@ const votingRouter = require('./routes/votingRouter');
 const farmRouter = require('./routes/farmRouter');
 const stakingRouter = require('./routes/stakingRouter');
 const chartRouter = require('./routes/chartRouter');
-const { storeYocPricePer20mins } = require("./controllers/chartController");
+const { storeYocPricePer20mins, storeTVLPer20mins } = require("./controllers/chartController");
 
 var corsOptions = {
     origin: "http://localhost:3000"
@@ -38,5 +38,6 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}.`);
 
-    storeYocPricePer20mins();
+    // storeYocPricePer20mins();
+    storeTVLPer20mins();
 });
