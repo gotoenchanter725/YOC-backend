@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 
-const { FarmsPools } = require('../models');
+const { FarmsPool } = require('../models');
 
 router.get('/pools', async (req, res) => {
     try {
-        const pools = await FarmsPools.findAll({
+        const pools = await FarmsPool.findAll({
             where: {
                 isFinished: false, 
             },

@@ -1,6 +1,6 @@
 const { delay, convertWeiToEth, convertEthToWei, getProvider } = require('../untils');
 const { Contract, BigNumber, constants, utils, ethers } = require('ethers');
-const { Prices, StakePools, TotalValueLockUSDPrices } = require('../models');
+const { Price, StakePool, TotalValueLockPrice } = require('../models');
 const { YOCSwapFactory, YOC, USDCToken, YOCSwapRouter, YOCPair, TokenTemplate, YOCPool } = require("../config/contracts");
 const _ = require("lodash");
 var format = require('date-format');
@@ -17,24 +17,24 @@ const storeYocPricePer20mins = async () => {
         for (let i = 0; i < 10; i++) {
             let res = await swapContract.getExpectLiquidityAmount(YOC.address, USDCToken.address, convertEthToWei('1', YOC.decimals));
             let yPrice = convertWeiToEth(res, USDCToken.decimals);
-            console.log(i + 1, +yPrice);
+            // console.log(i + 1, +yPrice);
             t_prices.push(+yPrice);
-            console.log(format('yyyy-MM-dd hh:mm:ss', new Date()));
+            // console.log(format('yyyy-MM-dd hh:mm:ss', new Date()));
         }
         toDate = new Date();
-        console.log("<===== Save Data ====>")
-        console.log({
-            high: _.max(t_prices),
-            low: _.min(t_prices),
-            from: t_prices[0],
-            to: t_prices[t_prices.length - 1],
-            prices: t_prices.reduce((a, b) => a + b, 0) / t_prices.length,
+        // console.log("<===== Save Data ====>")
+        // console.log({
+        //     high: _.max(t_prices),
+        //     low: _.min(t_prices),
+        //     from: t_prices[0],
+        //     to: t_prices[t_prices.length - 1],
+        //     prices: t_prices.reduce((a, b) => a + b, 0) / t_prices.length,
 
-            fromDate: format('yyyy-MM-dd hh:mm:ss', fromDate),
-            toDate: format('yyyy-MM-dd hh:mm:ss', new Date()),
-            datetime: format('yyyy-MM-dd hh:mm:ss', fromDate),
-        })
-        const newPrice = await Prices.create({
+        //     fromDate: format('yyyy-MM-dd hh:mm:ss', fromDate),
+        //     toDate: format('yyyy-MM-dd hh:mm:ss', new Date()),
+        //     datetime: format('yyyy-MM-dd hh:mm:ss', fromDate),
+        // })
+        const newPrice = await Price.create({
             high: _.max(t_prices),
             low: _.min(t_prices),
             from: t_prices[0],
@@ -45,7 +45,7 @@ const storeYocPricePer20mins = async () => {
             toDate: format('yyyy-MM-dd hh:mm:ss', new Date()),
             datetime: format('yyyy-MM-dd hh:mm:ss', fromDate),
         });
-        await delay(1000 * 1);
+        await delay(1000 * 60);
     }
 }
 
@@ -73,7 +73,7 @@ const storeTVLPer20mins = async () => {
             toDate: format('yyyy-MM-dd hh:mm:ss', new Date()),
             datetime: format('yyyy-MM-dd hh:mm:ss', fromDate),
         })
-        const newPrice = await TotalValueLockUSDPrices.create({
+        const newPrice = await TotalValueLockPrice.create({
             high: _.max(t_prices),
             low: _.min(t_prices),
             from: t_prices[0],
@@ -159,7 +159,7 @@ const getTotalUSD = async () => {
         totalUSD += usdBalance;
     }
 
-    const poolsData = await StakePools.findAll({
+    const poolsData = await StakePool.findAll({
         where: {
             isFinished: false,
         },

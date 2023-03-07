@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 
-const { StakePools } = require('../models');
+const { StakePool } = require('../models');
 
 router.get('/pools', async (req, res) => {
     try {
-        const pools = await StakePools.findAll({
+        const pools = await StakePool.findAll({
             where: {
                 isFinished: false, 
             },
