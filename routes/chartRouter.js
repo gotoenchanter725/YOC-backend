@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { Op } = require("sequelize");
 
-const { Prices, TotalValueLockUSDPrices } = require('../models');
+const { Price, TotalValueLockPrice } = require('../models');
 
 router.get('/get-all', async (req, res) => {
     try {
-        const prices = await Prices.findAll({
+        const prices = await Price.findAll({
             datetime: [['createdAt', 'ASC']]
         });
         return res.status(201).json({
@@ -20,7 +20,7 @@ router.get('/get-all', async (req, res) => {
 router.get('/get', async (req, res) => {
     try {
         console.log(req.query.period);
-        const prices = await Prices.findAll({
+        const prices = await Price.findAll({
             datetime: [['createdAt', 'ASC']],
             where: {
                 datetime: { [Op.gt]: Date.now() - (req.query.period ? req.query.period : 1000 * 60 * 60 * 24) }
@@ -37,7 +37,7 @@ router.get('/get', async (req, res) => {
 router.get('/tvl-get', async (req, res) => {
     try {
         console.log(req.query.period);
-        const totalValueLockUSDPrices = await TotalValueLockUSDPrices.findAll({
+        const totalValueLockUSDPrices = await TotalValueLockPrice.findAll({
             datetime: [['createdAt', 'ASC']],
             where: {
                 datetime: { [Op.gt]: Date.now() - (req.query.period ? req.query.period : 1000 * 60 * 60 * 24) }

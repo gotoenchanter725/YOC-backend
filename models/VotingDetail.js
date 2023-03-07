@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = (sequelize, DataTypes) => {
-    const VotingDetail = sequelize.define('voting_detail', {
+    const VotingDetailModel = sequelize.define('VotingDetail', {
         queryId: DataTypes.INTEGER,
         userAddress: DataTypes.STRING,
         votingState: DataTypes.INTEGER,
@@ -13,11 +13,15 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.DATE,
             defaultValue: DataTypes.NOW
         }
-    }, {});
-    VotingDetail.associate = function (models) {
+    }, {
+        tableName: "voting_details", 
+    });
+
+    VotingDetailModel.associate = function (models) {
         // associations can be defined here
 
-        VotingDetail.belongsTo(models.VotingQuery, { foreignKey: 'queryId' })
+        VotingDetailModel.belongsTo(models.VotingQuery, { foreignKey: 'queryId' })
     };
-    return VotingDetail;
+
+    return VotingDetailModel;
 };

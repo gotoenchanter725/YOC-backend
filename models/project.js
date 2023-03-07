@@ -1,24 +1,26 @@
-'use strict';
-
 module.exports = (sequelize, DataTypes) => {
-  const Project = sequelize.define('project', {
+  const ProjectModel = sequelize.define('Project', {
     projectTitle: DataTypes.STRING,
     iconUrl: DataTypes.STRING,
     endDate: DataTypes.DATE,
     createdAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
+      allowNull: false,
+      type: DataTypes.DATE
     },
     updatedAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
+      allowNull: false,
+      type: DataTypes.DATE
     }
-  }, {});
-  Project.associate = function (models) {
+  }, {
+    tableName: 'projects', 
+  });
+
+  ProjectModel.associate = function (models) {
     // associations can be defined here
-    Project.hasMany(models.VotingQuery, {
+    ProjectModel.hasMany(models.VotingQuery, {
       foreignKey: 'projectTitle'
     })
   };
-  return Project;
+
+  return ProjectModel;
 };
