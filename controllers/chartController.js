@@ -18,7 +18,7 @@ const storeYocPricePer20mins = async () => {
             let res = await swapContract.getExpectLiquidityAmount(YOC.address, USDCToken.address, convertEthToWei('1', YOC.decimals));
             let yPrice = convertWeiToEth(res, USDCToken.decimals);
             console.log(i + 1, +yPrice);
-            t_prices.push(+yPrice + Number(Math.random().toFixed(3)) * 10);
+            t_prices.push(+yPrice);
             console.log(format('yyyy-MM-dd hh:mm:ss', new Date()));
         }
         toDate = new Date();
@@ -53,11 +53,11 @@ const storeTVLPer20mins = async () => {
     
     while (true) {
         let t_prices = [], fromDate = new Date();
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 2; i++) {
             let tPrice = await getTotalUSD()
             console.log("Price:", tPrice);
             console.log(i + 1, +tPrice);
-            t_prices.push(+tPrice + Number(Math.random().toFixed(3)) * 10);
+            t_prices.push(+tPrice);
             console.log(format('yyyy-MM-dd hh:mm:ss', new Date()));
         }
         toDate = new Date();
@@ -84,6 +84,7 @@ const storeTVLPer20mins = async () => {
             toDate: format('yyyy-MM-dd hh:mm:ss', new Date()),
             datetime: format('yyyy-MM-dd hh:mm:ss', fromDate),
         });
+        console.log("Save TVL")
         await delay(1000 * 1);
     }
 }
