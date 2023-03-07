@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
     to: DataTypes.FLOAT,
     fromDate: DataTypes.DATE,
     toDate: DataTypes.DATE,
-    tetime: DataTypes.DATE,
+    datetime: DataTypes.DATE, 
     createdAt: {
       allowNull: false,
       type: DataTypes.DATE
