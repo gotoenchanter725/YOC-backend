@@ -14,7 +14,7 @@ const convertWeiToEth = function (wei, decimals) {
 
 const getRPCURL = function () {
     if (process.env.NODE_ENV == 'production') {
-        return process.env.NET_WORK == "ETH" ? "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161" : "https://bsc-dataseed1.ninicoin.io/"
+        return process.env.NET_WORK == "ETH" ? "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161" : "https://bsc-dataseed1.binance.org/"
     } else {
         return process.env.NET_WORK == "ETH" ? "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161" : "https://data-seed-prebsc-1-s3.binance.org:8545/"
     }
