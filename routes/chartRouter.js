@@ -23,7 +23,7 @@ router.get('/get', async (req, res) => {
         const prices = await Price.findAll({
             datetime: [['createdAt', 'ASC']],
             where: {
-                datetime: { [Op.gt]: Date.now() - (req.query.period ? req.query.period : 1000 * 60 * 60 * 24) }
+                datetime: { [Op.gt]: Date.now() - (req.query.period ? req.query.period : 1000 * 60 * 60 * 5) }
             }
         });
         return res.status(201).json({
@@ -40,7 +40,7 @@ router.get('/tvl-get', async (req, res) => {
         const totalValueLockUSDPrices = await TotalValueLockPrice.findAll({
             datetime: [['createdAt', 'ASC']],
             where: {
-                datetime: { [Op.gt]: Date.now() - (req.query.period ? req.query.period : 1000 * 60 * 60 * 24) }
+                datetime: { [Op.gt]: Date.now() - (req.query.period ? req.query.period : 1000 * 60 * 60 * 5) }
             }
         });
         return res.status(201).json({

@@ -20,6 +20,7 @@ const storeYocPricePer20mins = async () => {
             // console.log(i + 1, +yPrice);
             t_prices.push(+yPrice);
             // console.log(format('yyyy-MM-dd hh:mm:ss', new Date()));
+            await delay(1000 * 10);
         }
         toDate = new Date();
         // console.log("<===== Save Data ====>")
@@ -50,7 +51,7 @@ const storeYocPricePer20mins = async () => {
 }
 
 const storeTVLPer20mins = async () => {
-    
+
     while (true) {
         let t_prices = [], fromDate = new Date();
         for (let i = 0; i < 2; i++) {
@@ -183,7 +184,7 @@ const getTotalUSD = async () => {
 
         let totalLiquidity = convertWeiToEth(await tokenContact.balanceOf(poolsData[i].address), stakeDecimal);
         let stakedTotalUSDRes = 0;
-        
+
         if (tokenAddress != USDCToken.address && Number(totalLiquidity)) {
             stakedTotalUSDRes = Number(convertWeiToEth((await swapRouterContract.getAmountsOut(
                 convertEthToWei(totalLiquidity, stakeDecimal),
