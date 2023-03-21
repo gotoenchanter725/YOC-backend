@@ -12,6 +12,7 @@ const farmRouter = require('./routes/farmRouter');
 const stakingRouter = require('./routes/stakingRouter');
 const chartRouter = require('./routes/chartRouter');
 const currencyRouter = require('./routes/currencyRouter');
+const liqudityRouter = require('./routes/liquidityRouter');
 
 const { storeYocPricePer20mins, storeTVLPer20mins } = require("./controllers/chartController");
 
@@ -35,6 +36,7 @@ app.use('/api/farm', farmRouter);
 app.use('/api/staking', stakingRouter);
 app.use('/api/chart', chartRouter);
 app.use('/api/admin/currency', currencyRouter);
+app.use('/api/admin/liquidity', liqudityRouter);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;
