@@ -22,6 +22,8 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   CurrencyModel.associate = function (models) {
+    CurrencyModel.hasOne(models.Liquidity, {foreignKey: 'id'});
+
   }
 
   return CurrencyModel;

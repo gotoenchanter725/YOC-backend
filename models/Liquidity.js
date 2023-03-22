@@ -6,12 +6,8 @@ module.exports = (sequelize, DataTypes) => {
       pairDecimals: DataTypes.INTEGER,
       pairSymbol: DataTypes.STRING,
       isYoc: DataTypes.BOOLEAN,
-      token0Address: DataTypes.STRING,
-      token1Address: DataTypes.STRING,
-      token0Symbol: DataTypes.STRING,
-      token1Symbol: DataTypes.STRING,
-      token0Decimals: DataTypes.INTEGER,
-      token1Decimals: DataTypes.INTEGER,
+      token0: DataTypes.INTEGER, 
+      token1: DataTypes.INTEGER, 
       isActive: {
           type: DataTypes.BOOLEAN,
           defaultValue: true
@@ -30,6 +26,8 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   LiquidityModel.associate = function (models) {
+    LiquidityModel.belongsTo(models.Currency, {as: 'currency0', foreignKey: 'token0'});
+    LiquidityModel.belongsTo(models.Currency, {as: 'currency1', foreignKey: 'token1'});
   };
   return LiquidityModel;
 };

@@ -24,22 +24,10 @@ module.exports = {
       isYoc: {
         type: Sequelize.BOOLEAN
       },
-      token0Address: {
-        type: Sequelize.STRING
-      },
-      token1Address: {
-        type: Sequelize.STRING
-      },
-      token0Symbol: {
-        type: Sequelize.STRING
-      },
-      token1Symbol: {
-        type: Sequelize.STRING
-      },
-      token0Decimals: {
+      token0: {
         type: Sequelize.INTEGER
       },
-      token1Decimals: {
+      token1: {
         type: Sequelize.INTEGER
       },
       isActive: {
