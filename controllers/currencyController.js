@@ -1,9 +1,9 @@
-
 const { Currency } = require('../models');
+const { AdminWalletAddress } = require('../config/contracts');
 
 const allCurrencies = async (req, res) => {
     const { account } = req.query;
-    if (account == process.env.AdminWalletAddress) {
+    if (account == AdminWalletAddress) {
         const currencies = await Currency.findAll({
             // order: [['createdAt', 'ASC']]
         })
@@ -18,7 +18,7 @@ const allCurrencies = async (req, res) => {
 const addCurrency = async (req, res) => {
     const { account } = req.body;
 
-    if (account == process.env.AdminWalletAddress) {
+    if (account == AdminWalletAddress) {
         const currency = await Currency.create({
             ...req.body,
             isActive: true,
@@ -35,7 +35,7 @@ const addCurrency = async (req, res) => {
 const editCurrency = async (req, res) => {
     const { account } = req.body;
 
-    if (account == process.env.AdminWalletAddress) {
+    if (account == AdminWalletAddress) {
         console.log(req.body);
         const currency = await Currency.update({
             ...req.body
@@ -54,7 +54,7 @@ const editCurrency = async (req, res) => {
 
 const deleteCurrency = async (req, res) => {
     const { id, account } = req.query;
-    if (account == process.env.AdminWalletAddress) {
+    if (account == AdminWalletAddress) {
         const currencies = await Currency.destroy({
             where: {
                 id: id
@@ -71,7 +71,7 @@ const deleteCurrency = async (req, res) => {
 const stateCurrency = async (req, res) => {
     const { account } = req.body;
 
-    if (account == process.env.AdminWalletAddress) {
+    if (account == AdminWalletAddress) {
         const currency = await Currency.update({
             isActive: req.body.isActive
         }, {

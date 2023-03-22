@@ -1,0 +1,65 @@
+const ETH_NETWORK = {
+    mainnet: {
+        RPC_URL: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        CHAIN_ID: 1
+    },
+    testnet: {
+        RPC_URL: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        CHAIN_ID: 5
+    }
+}
+
+const ETH_CONTRACT_ADDRESS = {
+    AdminWalletAddress: "0x5141383723037FBd3818dAEcb7d4C5DF1Dc8c6B1",
+    ProjectManagerAddress: "0x100abd96d948CcEbe13f7ca1c9D35811fa3b73D8",
+    ProjectDetailAddress: "0x86D7F06af5E0D517835361c962234A96074431EF",
+    WETH: "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6",
+    YOCAddress: "0x5A3B9f4a4aD616f67D3406967516eEB50B6cc379",
+    USDCAddress: "0x587FE7dE6Cfaa1C2961747efB05eb5E399C661f5",
+    YOCSwapFactoryAddress: "0xb5adA6454C59ef7E340004Bf81B1e75087eb68f8",
+    YOCSwapRouterAddress: "0x369ccED38f349A61bfea7CC2489999AA065c5667",
+    YOCFarmAddress: "0x4Af2aCdB241937d32Ec1A15F2b3E48768161DE10",
+
+    YOC1: "0x5fb8fBeeFcEd7DFE2C6bA21754EA764aFdE8fe9f",
+    YOC2: "0x6572a96eE12eCf3fDbE92eB2a05f768e40d74080",
+    YOC3: "0x19ff1dA431B6D723561D8E45002234573E64c655",
+    YOC4: "0x6Fb3eAD94e597B75b0Cf2D9d11275Bcb499c9FBC",
+    YOC5: "0x6c9DE6074fc06d8924789d242A7037e48c682C10",
+}
+
+const BNB_NETWORK = {
+    mainnet: {
+        RPC_URL: "https://bsc-dataseed1.binance.org/",
+        CHAIN_ID: 56
+    },
+    testnet: {
+        RPC_URL: "https://data-seed-prebsc-1-s3.binance.org:8545/",
+        CHAIN_ID: 97
+    }
+}
+
+const BNB_CONTRACT_ADDRESS = {
+    AdminWalletAddress: "0x5141383723037FBd3818dAEcb7d4C5DF1Dc8c6B1",
+    ProjectManagerAddress: "0x3b581bbbB90DA71D3950365E97356b83749Db0Ff",
+    ProjectDetailAddress: "0x5A9A251f5FE36251e7E2f758ABb2b1ac7eb92D41",
+    WETH: "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
+    YOCAddress: "0x8d22219Dbc8B096632B352A0bD7815801e59173D",
+    USDCAddress: "0xBb825b20d4ae49f007b2600eB4846C16579E711C",
+    YOCSwapFactoryAddress: "0x1be0f265EEAf3B68A818D089Ec23E3c2260c7CBA",
+    YOCSwapRouterAddress: "0xd19e0Ee35B1EcA48a00F548A39D4838B60AfFE06",
+    YOCFarmAddress: "0x73efC5146dD5a1722659b3dFd64b4f63EdE9e033",
+
+    YOC1: "0x866020AFa80279595BfD2cC38f19D1a5E9a2aBBf",
+    YOC2: "0x1a0946DeB7b5Cbc2b03beE2ff23EE7165729860f",
+    YOC3: "0xB7E8F4F64D9F3EC0338d8872E2F28D8Fc490C763",
+    YOC4: "0x900d3C76D20C63CE1E96AF83Ea0BC505a15Dbf0f",
+    YOC5: "0xC25C0d4E47fF3cfbBc973EBF99d0237daEE57411",
+}
+
+const NETWORK = process.env.NET_WORK === "ETH" ? ETH_NETWORK : BNB_NETWORK;
+const CONTRACT_ADDRESS = process.env.NET_WORK === "ETH" ? ETH_CONTRACT_ADDRESS : BNB_CONTRACT_ADDRESS;
+
+module.exports = {
+    NETWORK,
+    CONTRACT_ADDRESS
+}
