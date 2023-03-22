@@ -30,9 +30,32 @@ module.exports = {
       token1: {
         type: Sequelize.INTEGER
       },
+
+      // liquidity information
+      amount: { // LP amount
+        type: Sequelize.STRING, 
+        defaultValue: "0"
+      },
+      amount0: {
+        type: Sequelize.STRING, 
+        defaultValue: "0"
+      },
+      amount1: {
+        type: Sequelize.STRING, 
+        defaultValue: "0"
+      },
+      rate: {
+        type: Sequelize.STRING, 
+        defaultValue: ""
+      }, 
+
       isActive: {
-        type: Sequelize.BOOLEAN, 
+        type: Sequelize.BOOLEAN,
         defaultValue: true
+      },
+      isDelete: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false
       },
       createdAt: {
         allowNull: false,

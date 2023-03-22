@@ -8,9 +8,32 @@ module.exports = (sequelize, DataTypes) => {
       isYoc: DataTypes.BOOLEAN,
       token0: DataTypes.INTEGER, 
       token1: DataTypes.INTEGER, 
+
+      amount: { // LP amount
+        type: DataTypes.STRING, 
+        defaultValue: "0"
+      },
+      amount0: {
+        type: DataTypes.STRING, 
+        defaultValue: "0"
+      },
+      amount1: {
+        type: DataTypes.STRING, 
+        defaultValue: "0"
+      },
+      rate: {
+        type: DataTypes.STRING, 
+        defaultValue: ""
+      }, 
+
+
       isActive: {
           type: DataTypes.BOOLEAN,
           defaultValue: true
+      },
+      isDelete: {
+          type: DataTypes.BOOLEAN,
+          defaultValue: false
       },
 
       createdAt: {
