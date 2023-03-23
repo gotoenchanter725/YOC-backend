@@ -2,7 +2,7 @@
 const { Liquidity, Currency } = require('../models');
 const { AdminWalletAddress } = require('../config/contracts');
 
-const allCurrencies = async (req, res) => {
+const allLiquidities = async (req, res) => {
     const { account } = req.query;
     if (account == AdminWalletAddress) {
         const liquidities = await Liquidity.findAll({
@@ -26,28 +26,28 @@ const allCurrencies = async (req, res) => {
     }
 }
 
-const addCurrency = async (req, res) => {
+const addLiquidity = async (req, res) => {
     const { account } = req.body;
 
     if (account == AdminWalletAddress) {
-        const currency = await Liquidity.create({
+        const liquidity = await Liquidity.create({
             ...req.body,
             // isActive: true,
         })
         return res.status(200).json({
-            currency
+            liquidity
         })
     } else {
         return res.status(500).json({ error: 'you are not admin' })
     }
 }
 
-const editCurrency = async (req, res) => {
+const editLiquidity = async (req, res) => {
     const { account } = req.body;
 
     if (account == AdminWalletAddress) {
         console.log(req.body);
-        const currency = await Liquidity.update({
+        const liquidity = await Liquidity.update({
             ...req.body
         }, {
             where: {
@@ -55,14 +55,14 @@ const editCurrency = async (req, res) => {
             }
         })
         return res.status(200).json({
-            currency
+            liquidity
         })
     } else {
         return res.status(500).json({ error: 'you are not admin' })
     }
 }
 
-const deleteCurrency = async (req, res) => {
+const deleteLiquidity = async (req, res) => {
     const { id, account } = req.query;
     if (account == AdminWalletAddress) {
         const liquidities = await Liquidity.destroy({
@@ -78,11 +78,11 @@ const deleteCurrency = async (req, res) => {
     }
 }
 
-const stateCurrency = async (req, res) => {
+const stateLiquidity = async (req, res) => {
     const { account } = req.body;
 
     if (account == AdminWalletAddress) {
-        const currency = await Liquidity.update({
+        const liquidity = await Liquidity.update({
             isActive: req.body.isActive
         }, {
             where: {
@@ -90,17 +90,44 @@ const stateCurrency = async (req, res) => {
             }
         })
         return res.status(200).json({
-            currency
+            liquidity
         })
     } else {
         return res.status(500).json({ error: 'you are not admin' })
     }
 }
 
+// ====================== PUBLICK ======================
+
+const viewAllLiquidities = async (req, res) => {
+    const liquidities = await Liquidity.findAll({
+        // order: [['createdAt', 'ASC']]
+        include: [
+            {
+                model: Currency,
+                as: 'currency0'
+            },
+            {
+                model: Currency,
+                as: 'currency1'
+            }
+        ], 
+        where: {
+            isActive: true, 
+            isDelete: false
+        }
+    })
+    return res.status(200).json({
+        liquidities
+    })
+}
+
 module.exports = {
-    allCurrencies,
-    addCurrency,
-    editCurrency,
-    deleteCurrency,
-    stateCurrency
+    allLiquidities,
+    addLiquidity,
+    editLiquidity,
+    deleteLiquidity,
+    stateLiquidity,
+
+    viewAllLiquidities,
 }

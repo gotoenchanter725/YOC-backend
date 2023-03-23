@@ -87,10 +87,26 @@ const stateCurrency = async (req, res) => {
     }
 }
 
+// ====================== PUBLICK ======================
+
+const viewAllCurrencies = async (req, res) => {
+    const currencies = await Currency.findAll({
+        where: {
+            isActive: true, 
+            isDelete: false
+        }
+    })
+    return res.status(200).json({
+        currencies
+    })
+}
+
 module.exports = {
     allCurrencies,
     addCurrency,
     editCurrency,
     deleteCurrency,
-    stateCurrency
+    stateCurrency,
+
+    viewAllCurrencies
 }
