@@ -12,38 +12,13 @@ module.exports = {
       poolId: {
         type: Sequelize.INTEGER
       },
-      pairAddress: {
-        type: Sequelize.STRING
-      },
-      pairDecimals: {
-        type: Sequelize.INTEGER
-      },
-      pairSymbol: {
-        type: Sequelize.STRING
-      },
-      isYoc: {
-        type: Sequelize.BOOLEAN
-      },
       allocPoint: {
         type: Sequelize.INTEGER
       },
-      token0Address: {
-        type: Sequelize.STRING
-      },
-      token1Address: {
-        type: Sequelize.STRING
-      },
-      token0Symbol: {
-        type: Sequelize.STRING
-      },
-      token1Symbol: {
-        type: Sequelize.STRING
-      },
-      token0Decimals: {
-        type: Sequelize.INTEGER
-      },
-      token1Decimals: {
-        type: Sequelize.INTEGER
+
+      isActive: {
+        type: Sequelize.BOOLEAN, 
+        defaultValue: false
       },
       isFinished: {
         type: Sequelize.BOOLEAN, 

@@ -2,34 +2,34 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('stake_pools', {
+    await queryInterface.createTable('farm_details', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      poolId: {
-        type: Sequelize.INTEGER
+      farmId: {
+        allowNull: false,
+        type: Sequelize.INTEGER,
       },
-      address: {
-        type: Sequelize.STRING
+      liquidityId: {
+        allowNull: false,
+        type: Sequelize.INTEGER,
       },
-      token: {
-        type: Sequelize.INTEGER
+      userAddress: {
+        allowNull: false,
+        type: Sequelize.STRING,
       },
-      allocPoint: {
-        type: Sequelize.INTEGER
+      allowance: {
+        allowNull: false,
+        type: Sequelize.BOOLEAN,
+      },
+      amount: {
+        allowNull: false,
+        type: Sequelize.STRING,
       },
 
-      isActive: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false
-      },
-      isFinished: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
@@ -41,6 +41,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('stake_pools');
+    await queryInterface.dropTable('farm_details');
   }
 };

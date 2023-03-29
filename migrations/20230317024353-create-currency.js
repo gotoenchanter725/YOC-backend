@@ -27,9 +27,12 @@ module.exports = {
       image: {
         type: Sequelize.STRING,
       },
-      decimal: {
+      decimals: {
         type: Sequelize.INTEGER,
       },
+      price: {
+        type: Sequelize.STRING,
+      }, 
       isDelete: {
         type: Sequelize.BOOLEAN,
       },

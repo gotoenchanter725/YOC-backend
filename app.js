@@ -17,6 +17,7 @@ const adminCurrencyRouter = require('./routes/admin/currencyRouter');
 const adminLiqudityRouter = require('./routes/admin/liquidityRouter');
 
 const { storeYocPricePer20mins, storeTVLPer20mins } = require("./controllers/chartController");
+const { scanMonitorLiquidities } = require("./controllers/liquidityController");
 
 var corsOptions = {
     origin: "http://localhost:3000"
@@ -49,4 +50,5 @@ app.listen(PORT, () => {
 
     // storeYocPricePer20mins();
     // storeTVLPer20mins();
+    scanMonitorLiquidities()
 });

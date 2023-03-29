@@ -5,7 +5,8 @@ module.exports = (sequelize, DataTypes) => {
     address: DataTypes.STRING,
     description: DataTypes.STRING, 
     image: DataTypes.STRING, 
-    decimal: DataTypes.INTEGER, 
+    decimals: DataTypes.INTEGER, 
+    price: DataTypes.STRING, // USD price, exactly USDC token amount
     isDelete: DataTypes.BOOLEAN, 
     isActive: DataTypes.BOOLEAN, 
 
