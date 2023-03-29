@@ -50,5 +50,5 @@ app.listen(PORT, () => {
 
     // storeYocPricePer20mins();
     // storeTVLPer20mins();
-    scanMonitorLiquidities()
+    // scanMonitorLiquidities()
 });
