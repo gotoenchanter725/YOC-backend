@@ -21,10 +21,16 @@ module.exports = {
       allocPoint: {
         type: Sequelize.INTEGER
       },
+      totalShare: {
+        type: Sequelize.STRING
+      },
+      accYocPerShare: {
+        type: Sequelize.STRING
+      },
 
       isActive: {
         type: Sequelize.BOOLEAN,
-        defaultValue: false
+        defaultValue: true
       },
       isFinished: {
         type: Sequelize.BOOLEAN,

@@ -15,6 +15,8 @@ const currencyRouter = require('./routes/currencyRouter');
 const liqudityRouter = require('./routes/liquidityRouter');
 const adminCurrencyRouter = require('./routes/admin/currencyRouter');
 const adminLiqudityRouter = require('./routes/admin/liquidityRouter');
+const adminFarmRouter = require('./routes/admin/farmRouter');
+const adminStakeRouter = require('./routes/admin/stakeRouter');
 
 const { storeYocPricePer20mins, storeTVLPer20mins } = require("./controllers/chartController");
 const { scanMonitorLiquidities } = require("./controllers/liquidityController");
@@ -40,6 +42,8 @@ app.use('/api/staking', stakingRouter);
 app.use('/api/chart', chartRouter);
 app.use('/api/admin/currency', adminCurrencyRouter);
 app.use('/api/admin/liquidity', adminLiqudityRouter);
+app.use('/api/admin/farm', adminFarmRouter);
+app.use('/api/admin/stake', adminStakeRouter);
 app.use('/api/liquidity', liqudityRouter);
 app.use('/api/currency', currencyRouter);
 

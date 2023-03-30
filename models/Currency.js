@@ -3,12 +3,12 @@ module.exports = (sequelize, DataTypes) => {
     name: DataTypes.STRING,
     symbol: DataTypes.STRING,
     address: DataTypes.STRING,
-    description: DataTypes.STRING, 
-    image: DataTypes.STRING, 
-    decimals: DataTypes.INTEGER, 
+    description: DataTypes.STRING,
+    image: DataTypes.STRING,
+    decimals: DataTypes.INTEGER,
     price: DataTypes.STRING, // USD price, exactly USDC token amount
-    isDelete: DataTypes.BOOLEAN, 
-    isActive: DataTypes.BOOLEAN, 
+    isDelete: DataTypes.BOOLEAN,
+    isActive: DataTypes.BOOLEAN,
 
     createdAt: {
       allowNull: false,
@@ -23,8 +23,8 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   CurrencyModel.associate = function (models) {
-    CurrencyModel.hasOne(models.Liquidity, {foreignKey: 'id'});
-
+    CurrencyModel.hasOne(models.Liquidity, { foreignKey: 'id' });
+    CurrencyModel.hasOne(models.StakePool, { foreignKey: 'token' });
   }
 
   return CurrencyModel;

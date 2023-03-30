@@ -8,10 +8,12 @@ module.exports = (sequelize, DataTypes) => {
         // isYoc: DataTypes.BOOLEAN,
         token: DataTypes.INTEGER, 
         allocPoint: DataTypes.INTEGER,
+        totalShare: DataTypes.STRING, 
+        accYocPerShare: DataTypes.STRING,
 
         isActive: {
             type: DataTypes.BOOLEAN,
-            defaultValue: false
+            defaultValue: true
         },
         isFinished: {
             type: DataTypes.BOOLEAN,
@@ -31,6 +33,7 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     StakePoolModel.associate = function (models) {
+        StakePoolModel.belongsTo(models.Currency, {as: 'currency', foreignKey: 'id'});
     };
 
     return StakePoolModel;

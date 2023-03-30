@@ -9,19 +9,28 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
+      liquidityId: {
+        type: Sequelize.INTEGER
+      },
       poolId: {
         type: Sequelize.INTEGER
       },
       allocPoint: {
         type: Sequelize.INTEGER
       },
+      totalLPAmount: {
+        type: Sequelize.STRING
+      },
+      accYocPerShare: {
+        type: Sequelize.STRING
+      },
 
       isActive: {
-        type: Sequelize.BOOLEAN, 
-        defaultValue: false
+        type: Sequelize.BOOLEAN,
+        defaultValue: true
       },
       isFinished: {
-        type: Sequelize.BOOLEAN, 
+        type: Sequelize.BOOLEAN,
         defaultValue: false
       },
       createdAt: {
