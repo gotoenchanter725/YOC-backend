@@ -20,6 +20,7 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     FarmDetailModel.associate = function (models) {
+        FarmDetailModel.belongsTo(models.FarmPool, {as: 'farm', foreignKey: 'farmId'});
     };
     return FarmDetailModel;
 };

@@ -7,7 +7,8 @@ module.exports = {
     "database": "yocdb",
     "host": "127.0.0.1",
     "dialect": "mysql", 
-    'freezeTableName': true
+    'freezeTableName': true, 
+    "logging": false
   },
   "test": {
     "username": "root",
@@ -15,7 +16,8 @@ module.exports = {
     "database": "yocdb",
     "host": "127.0.0.1",
     "dialect": "mysql", 
-    'freezeTableName': true
+    'freezeTableName': true, 
+    "logging": false
   },
   "production": {
     "username": "root",
@@ -23,6 +25,7 @@ module.exports = {
     "database": "yocdb",
     "host": "127.0.0.1",
     "dialect": "mysql", 
-    'freezeTableName': true
+    'freezeTableName': true, 
+    "logging": false
   }
 };

@@ -20,6 +20,8 @@ const adminStakeRouter = require('./routes/admin/stakeRouter');
 
 const { storeYocPricePer20mins, storeTVLPer20mins } = require("./controllers/chartController");
 const { scanMonitorLiquidities } = require("./controllers/liquidityController");
+const { scanMonitorFarms } = require("./controllers/farmController");
+const { scanMonitorStakes } = require("./controllers/stakeController");
 
 var corsOptions = {
     origin: "http://localhost:3000"
@@ -38,7 +40,7 @@ app.use('/api/', indexRouter);
 app.use('/api/voting', votingRouter);
 app.use('/api/project', projectRouter);
 app.use('/api/farm', farmRouter);
-app.use('/api/staking', stakingRouter);
+app.use('/api/stake', stakingRouter);
 app.use('/api/chart', chartRouter);
 app.use('/api/admin/currency', adminCurrencyRouter);
 app.use('/api/admin/liquidity', adminLiqudityRouter);
@@ -54,5 +56,7 @@ app.listen(PORT, () => {
 
     // storeYocPricePer20mins();
     // storeTVLPer20mins();
-    // scanMonitorLiquidities()
+    scanMonitorLiquidities();
+    scanMonitorFarms();
+    scanMonitorStakes();
 });

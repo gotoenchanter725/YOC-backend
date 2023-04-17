@@ -1,22 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const { viewAllStakes, userStakeDetail, userStakeDetailUpdateAllowance } = require('../controllers/stakeController');
 
-const { StakePool } = require('../models');
-
-router.get('/pools', async (req, res) => {
-    try {
-        const pools = await StakePool.findAll({
-            where: {
-                isFinished: false, 
-            },
-            order: [['createdAt', 'ASC']]
-        });
-        return res.status(201).json({
-            pools
-        });
-    } catch (error) {
-        return res.status(500).json({ error: error.message })
-    }
-});
+router.get('/all', viewAllStakes);
+router.get('/user', userStakeDetail);
+router.post('/user/allowance', userStakeDetailUpdateAllowance);
 
 module.exports = router;

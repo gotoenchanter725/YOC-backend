@@ -6,9 +6,9 @@ module.exports = (sequelize, DataTypes) => {
         // tokenSymbol: DataTypes.STRING,
         // tokenDecimals: DataTypes.INTEGER,
         // isYoc: DataTypes.BOOLEAN,
-        token: DataTypes.INTEGER, 
+        token: DataTypes.INTEGER,
         allocPoint: DataTypes.INTEGER,
-        totalShare: DataTypes.STRING, 
+        totalShare: DataTypes.STRING,
         accYocPerShare: DataTypes.STRING,
 
         isActive: {
@@ -29,11 +29,12 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.DATE
         }
     }, {
-        tableName: "stake_pools", 
+        tableName: "stake_pools",
     });
 
     StakePoolModel.associate = function (models) {
-        StakePoolModel.belongsTo(models.Currency, {as: 'currency', foreignKey: 'id'});
+        StakePoolModel.belongsTo(models.Currency, { as: 'currency', foreignKey: 'token' });
+        StakePoolModel.hasOne(models.StakeDetail, { foreignKey: 'id' });
     };
 
     return StakePoolModel;

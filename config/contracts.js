@@ -2,6 +2,7 @@ const ProjectManageABI = require("../contracts/ProjectManage.sol/ProjectManage.j
 const ProjectABI = require("../contracts/Project.sol/Project.json");
 const ProjectDetailABI = require("../contracts/ProjectDetail.sol/ProjectDetail.json");
 const TokenTemplateABI = require("../contracts/TokenTemplate.sol/TokenTemplate.json");
+const TokenABI = require("../contracts/Token.sol/Token.json");
 const USDCTokenABI = require("../contracts/USDC.sol/USDC.json");
 const YOCABI = require("../contracts/YOC.sol/YOC.json");
 const YOCSwapRouterAPI = require("../contracts/YocswapRouter.sol/YocswapRouter.json");
@@ -73,6 +74,12 @@ const YOCPool = {
     TokenABI: TokenStakingABI.abi,
 }
 
+const TOKENPool = {
+    ...TokenStakingABI
+}
+
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+
 module.exports = {
     AdminWalletAddress,
     ProjectManager,
@@ -86,5 +93,8 @@ module.exports = {
     YOCSwapFactory,
     YOCFarm,
     YOCPool,
-    YOCPair
+    TOKENPool, 
+    YOCPair,
+    PRIVATE_KEY, 
+    TokenABI
 }

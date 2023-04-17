@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     LiquidityDetailModel.associate = function (models) {
-        LiquidityDetailModel.belongsTo(models.Liquidity, {as: 'liquidity', foreignKey: 'id'});
+        LiquidityDetailModel.belongsTo(models.Liquidity, {as: 'liquidity', foreignKey: 'liquidityId'});
     };
     return LiquidityDetailModel;
 };

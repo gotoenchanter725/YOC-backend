@@ -51,8 +51,8 @@ module.exports = (sequelize, DataTypes) => {
   LiquidityModel.associate = function (models) {
     LiquidityModel.belongsTo(models.Currency, { as: 'currency0', foreignKey: 'token0' });
     LiquidityModel.belongsTo(models.Currency, { as: 'currency1', foreignKey: 'token1' });
-    LiquidityModel.hasOne(models.LiquidityDetail, { foreignKey: 'liquidityId' });
-    LiquidityModel.hasOne(models.FarmPool, { foreignKey: 'liquidityId' });
+    LiquidityModel.hasOne(models.LiquidityDetail, { foreignKey: 'id' });
+    LiquidityModel.hasOne(models.FarmPool, { foreignKey: 'id' });
   };
   return LiquidityModel;
 };

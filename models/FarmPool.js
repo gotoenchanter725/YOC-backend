@@ -38,7 +38,8 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     FarmPoolModel.associate = function (models) {
-        FarmPoolModel.belongsTo(models.Liquidity, { as: 'liquidity', foreignKey: 'id' });
+        FarmPoolModel.belongsTo(models.Liquidity, { as: 'liquidity', foreignKey: 'liquidityId' });
+        FarmPoolModel.hasOne(models.FarmDetail, { foreignKey: 'id' });
     };
     return FarmPoolModel;
 };
