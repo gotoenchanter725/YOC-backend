@@ -28,5 +28,17 @@ router.get('/project/:id', async (req, res) => {
     }
 });
 
+router.delete('/project', async (req, res) => {
+    try {
+        // await Project.desttoy({
+        //     where: {
+
+        //     }
+        // })
+    } catch (err) {
+        
+    }
+});
+
 
 module.exports = router;

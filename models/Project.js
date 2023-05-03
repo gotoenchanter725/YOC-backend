@@ -3,6 +3,7 @@ module.exports = (sequelize, DataTypes) => {
     projectTitle: DataTypes.STRING,
     iconUrl: DataTypes.STRING,
     endDate: DataTypes.DATE,
+    isDeleted: DataTypes.BOOLEAN, 
     createdAt: {
       allowNull: false,
       type: DataTypes.DATE
