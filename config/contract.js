@@ -4,8 +4,10 @@ const ETH_NETWORK = {
         CHAIN_ID: 1
     },
     testnet: {
-        RPC_URL: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
-        CHAIN_ID: 5
+        // RPC_URL: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        // CHAIN_ID: 5
+        RPC_URL: "https://rpc2.sepolia.org",
+        CHAIN_ID: 11155111
     }
 }
 
