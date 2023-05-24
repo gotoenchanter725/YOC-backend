@@ -1,10 +1,13 @@
 require('dotenv').config();
 
+const database = process.env.NET_WORK == "ETH" ? "yocdb-eth" : "yocdb-bsc";
+console.log("Database:", database);
+
 module.exports = {
   "development": {
     "username": "root",
     "password": null,
-    "database": "yocdb",
+    "database": database,
     "host": "127.0.0.1",
     "dialect": "mysql", 
     'freezeTableName': true, 

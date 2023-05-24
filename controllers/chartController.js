@@ -1,7 +1,7 @@
 const { delay, convertWeiToEth, convertEthToWei, getProvider } = require('../untils');
 const { Contract, BigNumber, constants, utils, ethers } = require('ethers');
 const { Price, StakePool, TotalValueLockPrice } = require('../models');
-const { YOCSwapFactory, YOC, USDCToken, YOCSwapRouter, YOCPair, TokenTemplate, YOCPool } = require("../config/contracts");
+const { ProjectManager, YOCSwapFactory, YOC, USDCToken, YOCSwapRouter, YOCPair, TokenTemplate, YOCPool, Project } = require("../config/contracts");
 const _ = require("lodash");
 var format = require('date-format');
 
@@ -23,18 +23,18 @@ const storeYocPricePer20mins = async () => {
             await delay(1000 * 10);
         }
         toDate = new Date();
-        // console.log("<===== Save Data ====>")
-        // console.log({
-        //     high: _.max(t_prices),
-        //     low: _.min(t_prices),
-        //     from: t_prices[0],
-        //     to: t_prices[t_prices.length - 1],
-        //     prices: t_prices.reduce((a, b) => a + b, 0) / t_prices.length,
+        console.log("<===== Save Data ====>")
+        console.log({
+            high: _.max(t_prices),
+            low: _.min(t_prices),
+            from: t_prices[0],
+            to: t_prices[t_prices.length - 1],
+            prices: t_prices.reduce((a, b) => a + b, 0) / t_prices.length,
 
-        //     fromDate: format('yyyy-MM-dd hh:mm:ss', fromDate),
-        //     toDate: format('yyyy-MM-dd hh:mm:ss', new Date()),
-        //     datetime: format('yyyy-MM-dd hh:mm:ss', fromDate),
-        // })
+            fromDate: format('yyyy-MM-dd hh:mm:ss', fromDate),
+            toDate: format('yyyy-MM-dd hh:mm:ss', new Date()),
+            datetime: format('yyyy-MM-dd hh:mm:ss', fromDate),
+        })
         const newPrice = await Price.create({
             high: _.max(t_prices),
             low: _.min(t_prices),
@@ -51,11 +51,12 @@ const storeYocPricePer20mins = async () => {
 }
 
 const storeTVLPer20mins = async () => {
-
     while (true) {
         let t_prices = [], fromDate = new Date();
-        for (let i = 0; i < 2; i++) {
-            let tPrice = await getTotalUSD()
+        for (let i = 0; i < 20; i++) {
+            let tPrice = 0;
+            tPrice += await getTotalUSD();
+            tPrice += await getTotalUSDOfFunds();
             console.log("Price:", tPrice);
             console.log(i + 1, +tPrice);
             t_prices.push(+tPrice);
@@ -86,7 +87,7 @@ const storeTVLPer20mins = async () => {
             datetime: format('yyyy-MM-dd hh:mm:ss', fromDate),
         });
         console.log("Save TVL")
-        await delay(1000 * 1);
+        await delay(1000 * 60 * 10);
     }
 }
 
@@ -201,6 +202,44 @@ const getTotalUSD = async () => {
     }
 
     return totalUSD;
+}
+
+const getTotalUSDOfFunds = async () => {
+    const ProjectManagerInstance = new Contract(ProjectManager.address, ProjectManager.abi, getProvider());
+    const projects = await ProjectManagerInstance.getProjectAllContract();
+    let swapRouterContract = new Contract(
+        YOCSwapRouter.address,
+        YOCSwapRouter.abi,
+        getProvider()
+    );
+    let usdBalance = 0;
+    for (let i = 0; i < projects.length; i++) {
+        try {
+            const projectContract = new Contract(projects[i], Project.abi, getProvider());
+            const investTokenAddress = await projectContract.investToken();
+            const investContract = new Contract(investTokenAddress, TokenTemplate.abi, getProvider());
+            const investTokenSymbol = await investContract.symbol();
+            const investTokenDecimals = await investContract.decimals();
+            const investTokenBalanceOfProject = convertWeiToEth(await investContract.balanceOf(projects[i]), investTokenDecimals);
+            if (investTokenAddress != USDCToken.address && investTokenBalanceOfProject) {
+                console.log(convertEthToWei(investTokenBalanceOfProject, investTokenDecimals));
+                usdBalance += Number(convertWeiToEth((await swapRouterContract.getAmountsOut(
+                    convertEthToWei(investTokenBalanceOfProject, investTokenDecimals),
+                    [
+                        investTokenAddress,
+                        USDCToken.address
+                    ]
+                ))[1], USDCToken.decimals));
+            } else {
+                usdBalance += Number(investTokenBalanceOfProject)
+            }
+            console.log(`Project: ${projects[i]}, invest: ${investTokenAddress}, ${investTokenBalanceOfProject} ${investTokenSymbol}, ${usdBalance} USD`);
+        } catch (err) {
+            console.log(err.name);
+            continue;
+        }
+    }
+    return usdBalance;
 }
 
 module.exports = {
