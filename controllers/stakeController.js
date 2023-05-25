@@ -42,9 +42,9 @@ const addStake = async (req, res) => {
                 gasLimit: 630000
             });
             await dummyContract.deployed();
-            console.log('YOC Dummy Address: ', dummyContract.address);
+            console.log('stake-addstake', 'YOC Dummy Address: ', dummyContract.address);
             const YocFarmContract = new ethers.Contract(YOCFarm.address, YOCFarm.abi, signer);
-    
+
             // can't identify in Farm Add Event so save temperaly
             const newPool = await StakePool.create({
                 token: req.body.tokenId,
@@ -52,16 +52,16 @@ const addStake = async (req, res) => {
                 totalShare: 0,
                 accYocPerShare: 0
             });
-    
+
             await YocFarmContract.add(
                 req.body.allocPoint,
                 dummyContract.address,
                 false,
                 true
             )
-            console.log('create empty pool and save temp');
+            console.log('stake-addstake', 'create empty pool and save temp');
             const pId = +await YocFarmContract.poolLength();
-            console.log('poolId: ', pId);
+            console.log('stake-addstake', 'poolId: ', pId);
             let YOCPoolFactory, YOCPoolContract;
             if (currency.address == YOC.address) {
                 YOCPoolFactory = new ethers.ContractFactory(YOCPool.abi, YOCPool.bytecode, signer);
@@ -84,18 +84,18 @@ const addStake = async (req, res) => {
                 )
             }
             await YOCPoolContract.deployed();
-            console.log("YOCStakingPool Address: ", YOCPoolContract.address);
+            console.log('stake-addstake', "YOCStakingPool Address: ", YOCPoolContract.address);
             const tx = await dummyContract.approve(YOCPoolContract.address, MaxUint256);
             await tx.wait();
-            console.log("YOCStakingPool Approve");
+            console.log('stake-addstake', "YOCStakingPool Approve");
             await YOCPoolContract.init(
                 dummyContract.address
             )
-            console.log("YocStakingPool init\n");
-    
-            
+            console.log('stake-addstake', "YocStakingPool init\n");
+
+
             await StakePool.update({
-                address: YOCPoolContract.address, 
+                address: YOCPoolContract.address,
                 poolId: pId
             }, {
                 where: {
@@ -109,34 +109,34 @@ const addStake = async (req, res) => {
                         model: Currency,
                         as: 'currency',
                     }
-                ], 
+                ],
                 where: {
                     id: newPool.id
                 }
             })
-            
+
             const stakeContract = new Contract(
                 YOCPoolContract.address,
                 currency.address == YOC.address ? YOCPool.abi : YOCPool.TokenABI,
                 getProvider()
             );
             await stakeContract.on('Deposit', async (userAddress, amount) => {
-                console.log("<======== Stake-Deposit ========>");
+                console.log('stake-addstake', "<======== Stake-Deposit ========>");
                 updateSpecialStakePool(pool);
                 updateSpecialStakePoolByUser(userAddress, pool);
             })
             await stakeContract.on('Withdraw', async (userAddress, amount) => {
-                console.log("<======== Stake-Withdraw ========>");
+                console.log('stake-addstake', "<======== Stake-Withdraw ========>");
                 updateSpecialStakePool(pool);
                 updateSpecialStakePoolByUser(userAddress, pool);
             })
             await stakeContract.on('Harvest', async (userAddress, amount) => {
-                console.log("<======== Stake-Harvest ========>");
+                console.log('stake-addstake', "<======== Stake-Harvest ========>");
                 updateSpecialStakePool(pool);
                 updateSpecialStakePoolByUser(userAddress, pool);
             })
-            console.log('complete to create the pool and save successfuly');
-    
+            console.log('stake-addstake', 'complete to create the pool and save successfuly');
+
             return res.status(200).json({
                 success: "staking pool create"
             })
@@ -261,19 +261,19 @@ const scanMonitorStakes = async () => {
         })
 
         await stakeContract.on('Deposit', async (userAddress, amount) => {
-            console.log("<======== Stake-Deposit ========>");
+            console.log('stake-scanMonitorStakes', "<======== Stake-Deposit ========>");
             updateSpecialStakePool(item);
             updateSpecialStakePoolByUser(userAddress, item);
         })
 
         await stakeContract.on('Withdraw', async (userAddress, amount) => {
-            console.log("<======== Stake-Withdraw ========>");
+            console.log('stake-scanMonitorStakes', "<======== Stake-Withdraw ========>");
             updateSpecialStakePool(item);
             updateSpecialStakePoolByUser(userAddress, item);
         })
 
         await stakeContract.on('Harvest', async (userAddress, amount) => {
-            console.log("<======== Stake-Harvest ========>");
+            console.log('stake-scanMonitorStakes', "<======== Stake-Harvest ========>");
             updateSpecialStakePool(item);
             updateSpecialStakePoolByUser(userAddress, item);
         })
@@ -340,24 +340,29 @@ const updateSpecialStakePoolByUser = async (userAddress, item) => {
 
 const userStakeDetail = async (req, res) => {
     const { address, stakeId } = req.query;
-    let data = await StakeDetail.findOne({
-        include: [
-            {
-                model: StakePool,
-                as: 'stake',
-                include: [
-                    {
-                        model: Currency,
-                        as: 'currency'
-                    }
-                ]
-            },
-        ],
-        where: {
-            userAddress: address,
-            stakeId: stakeId
-        }
-    })
+    let data;
+    try {
+        data = await StakeDetail.findOne({
+            include: [
+                {
+                    model: StakePool,
+                    as: 'stake',
+                    include: [
+                        {
+                            model: Currency,
+                            as: 'currency'
+                        }
+                    ]
+                },
+            ],
+            where: {
+                userAddress: address,
+                stakeId: stakeId
+            }
+        })
+    } catch (err) {
+    }
+
     return res.status(200).json({
         stakeData: data
     })
@@ -387,7 +392,7 @@ const userStakeDetailUpdateAllowance = async (req, res) => {
         getProvider()
     )
     const allowance = convertWeiToEth(await tokenContract.allowance(address, pool.address), pool.currency.decimals)
-    console.log(address, balance, stakeId, allowance);
+    console.log('stake-userStakeDetailUpdateAllowance:', address, balance, stakeId, allowance);
     let state = 0;
     if (data) {
         state = await StakeDetail.update({

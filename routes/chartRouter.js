@@ -19,7 +19,6 @@ router.get('/get-all', async (req, res) => {
 
 router.get('/get', async (req, res) => {
     try {
-        console.log(req.query.period);
         const prices = await Price.findAll({
             datetime: [['createdAt', 'ASC']],
             where: {
@@ -36,7 +35,6 @@ router.get('/get', async (req, res) => {
 
 router.get('/tvl-get', async (req, res) => {
     try {
-        console.log(req.query.period);
         const totalValueLockUSDPrices = await TotalValueLockPrice.findAll({
             datetime: [['createdAt', 'ASC']],
             where: {

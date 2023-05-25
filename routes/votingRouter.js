@@ -85,7 +85,6 @@ router.post('/saveUserStatus', async (req, res) => {
 // Get Voting Result
 router.get('/queryId/:id', async (req, res) => {
     try {
-        console.log(req.params.id);
         const votingResult = await VotingDetail.findAll({
             where: {
                 queryId: req.params.id,
@@ -96,7 +95,6 @@ router.get('/queryId/:id', async (req, res) => {
                 }
             ]
         });
-        console.log('votingResult:', votingResult);
 
         return res.status(200).json({ votingResult: votingResult });
     } catch (error) {

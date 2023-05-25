@@ -1,6 +1,6 @@
 const { delay, convertWeiToEth, convertEthToWei, getProvider } = require('../untils');
 const { Contract, BigNumber, constants, utils, ethers } = require('ethers');
-const { Price, StakePool, TotalValueLockPrice } = require('../models');
+const { Price, StakePool, TotalValueLockPrice, Currency } = require('../models');
 const { ProjectManager, YOCSwapFactory, YOC, USDCToken, YOCSwapRouter, YOCPair, TokenTemplate, YOCPool, Project } = require("../config/contracts");
 const _ = require("lodash");
 var format = require('date-format');
@@ -23,8 +23,8 @@ const storeYocPricePer20mins = async () => {
             await delay(1000 * 10);
         }
         toDate = new Date();
-        console.log("<===== Save Data ====>")
-        console.log({
+        console.log("chart-storeYocPricePer20mins", "<===== Save Data ====>")
+        console.log("chart-storeYocPricePer20mins", {
             high: _.max(t_prices),
             low: _.min(t_prices),
             from: t_prices[0],
@@ -57,14 +57,14 @@ const storeTVLPer20mins = async () => {
             let tPrice = 0;
             tPrice += await getTotalUSD();
             tPrice += await getTotalUSDOfFunds();
-            console.log("Price:", tPrice);
-            console.log(i + 1, +tPrice);
+            console.log("chart-storeTVLPer20mins", "Price:", tPrice);
+            console.log("chart-storeTVLPer20mins", i + 1, +tPrice);
             t_prices.push(+tPrice);
-            console.log(format('yyyy-MM-dd hh:mm:ss', new Date()));
+            console.log("chart-storeTVLPer20mins", format('yyyy-MM-dd hh:mm:ss', new Date()));
         }
         toDate = new Date();
-        console.log("<===== Save Data ====>")
-        console.log({
+        console.log("chart-storeTVLPer20mins", "<===== Save Data ====>")
+        console.log("chart-storeTVLPer20mins", {
             high: _.max(t_prices),
             low: _.min(t_prices),
             from: t_prices[0],
@@ -86,7 +86,7 @@ const storeTVLPer20mins = async () => {
             toDate: format('yyyy-MM-dd hh:mm:ss', new Date()),
             datetime: format('yyyy-MM-dd hh:mm:ss', fromDate),
         });
-        console.log("Save TVL")
+        console.log("chart-storeTVLPer20mins", "Save TVL")
         await delay(1000 * 60 * 10);
     }
 }
@@ -103,7 +103,7 @@ const getTotalUSD = async () => {
         getProvider()
     );
     let poolLength = await swapFactoryContract.allPairsLength();
-    console.log(+ poolLength);
+    console.log("chart-getTotalUSD", "FarmsPools: ", + poolLength);
 
     let totalUSD = 0;
 
@@ -162,12 +162,18 @@ const getTotalUSD = async () => {
     }
 
     const poolsData = await StakePool.findAll({
+        include: [
+            {
+                model: Currency,
+                as: 'currency'
+            }
+        ],
         where: {
             isFinished: false,
         },
         order: [['createdAt', 'ASC']]
     });
-    console.log(poolsData.length)
+    console.log("chart-getTotalUSD", "StakePools: ", poolsData.length)
     for (let i = 0; i < poolsData.length; i++) {
         const stakingContract = new Contract(
             poolsData[i].address,
@@ -175,13 +181,13 @@ const getTotalUSD = async () => {
             getProvider()
         )
 
-        const tokenAddress = poolsData[i].tokenAddress;
+        const tokenAddress = poolsData[i].currency.address;
         const tokenContact = new Contract(
             tokenAddress,
             TokenTemplate.abi,
             getProvider()
         );
-        const stakeDecimal = poolsData[i].tokenDecimals;
+        const stakeDecimal = poolsData[i].currency.decimals;
 
         let totalLiquidity = convertWeiToEth(await tokenContact.balanceOf(poolsData[i].address), stakeDecimal);
         let stakedTotalUSDRes = 0;
@@ -197,7 +203,7 @@ const getTotalUSD = async () => {
         } else {
             stakedTotalUSDRes = Number(totalLiquidity)
         }
-        console.log('TOKEN: ', stakedTotalUSDRes);
+        console.log("chart-getTotalUSD", 'TOKEN: ', stakedTotalUSDRes);
         totalUSD += stakedTotalUSDRes;
     }
 
@@ -222,7 +228,6 @@ const getTotalUSDOfFunds = async () => {
             const investTokenDecimals = await investContract.decimals();
             const investTokenBalanceOfProject = convertWeiToEth(await investContract.balanceOf(projects[i]), investTokenDecimals);
             if (investTokenAddress != USDCToken.address && investTokenBalanceOfProject) {
-                console.log(convertEthToWei(investTokenBalanceOfProject, investTokenDecimals));
                 usdBalance += Number(convertWeiToEth((await swapRouterContract.getAmountsOut(
                     convertEthToWei(investTokenBalanceOfProject, investTokenDecimals),
                     [
@@ -233,9 +238,9 @@ const getTotalUSDOfFunds = async () => {
             } else {
                 usdBalance += Number(investTokenBalanceOfProject)
             }
-            console.log(`Project: ${projects[i]}, invest: ${investTokenAddress}, ${investTokenBalanceOfProject} ${investTokenSymbol}, ${usdBalance} USD`);
+            console.log("chart-getTotalUSD", `Project: ${projects[i]}, invest: ${investTokenAddress}, ${investTokenBalanceOfProject} ${investTokenSymbol}, ${usdBalance} USD`);
         } catch (err) {
-            console.log(err.name);
+            console.log("chart-getTotalUSD", err.name);
             continue;
         }
     }

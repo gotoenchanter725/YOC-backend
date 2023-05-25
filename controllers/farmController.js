@@ -43,7 +43,7 @@ const addFarm = async (req, res) => {
         const signer = new ethers.Wallet(PRIVATE_KEY, getProvider());
         try {
             const YocFarmContract = new ethers.Contract(YOCFarm.address, YOCFarm.abi, signer);
-            console.log(allocPoint, pairAddress, isYoc);
+            console.log("farm-addFarm", allocPoint, pairAddress, isYoc);
             await YocFarmContract.add(
                 allocPoint,
                 pairAddress,
@@ -54,7 +54,7 @@ const addFarm = async (req, res) => {
                 success: "Pool Create"
             })
         } catch (err) {
-            console.log(err);
+            console.log("farm-addFarm", err);
             return res.status(500).json({ error: 'contract' })
         }
     } else {
@@ -66,7 +66,6 @@ const editFarm = async (req, res) => {
     const { account } = req.body;
 
     if (account == AdminWalletAddress) {
-        console.log(req.body);
         const state = await FarmPool.update({
             ...req.body
         }, {
@@ -194,7 +193,7 @@ const scanMonitorFarms = async () => {
 
 
     await YOCFarmContract.on('AddPool', async (pId, allocPoint, pairAddress, isYoc) => {
-        console.log("<=========Farm&Stake Add Pool=======>")
+        console.log("farm-scanFarms", "<=========Farm&Stake Add Pool=======>")
         let poolInfo = await YOCFarmContract.poolInfo(pId);
 
         const liquidity = await Liquidity.findOne({
@@ -204,7 +203,7 @@ const scanMonitorFarms = async () => {
         })
         if (liquidity) {
             // Farm Pool Added
-            console.log('<============= Farm Pool Added ===========>')
+            console.log("farm-scanFarms", '<============= Farm Pool Added ===========>')
             const pool = await FarmPool.create({
                 liquidityId: liquidity.id,
                 poolId: pId,
@@ -215,7 +214,7 @@ const scanMonitorFarms = async () => {
             })
         } else {
             // Stake Pool Added
-            console.log('<============= Stake Pool Added ===========>')
+            console.log("farm-scanFarms", '<============= Stake Pool Added ===========>')
         }
     })
 }
@@ -233,9 +232,9 @@ const updateSpecialFarm = async (poolInfo, pId) => {
             poolId: pId
         }
     })
-    console.log(`Update FarmPool pId: ${pId}`);
-    console.log(`      totalLPAmount: ${totalLPAmount}`);
-    console.log(`     accYocPerShare: ${accYocPerShare}\n`);
+    console.log(`farm-updateSpecialFarm   Update FarmPool pId: ${pId}`);
+    console.log(`farm-updateSpecialFarm         totalLPAmount: ${totalLPAmount}`);
+    console.log(`farm-updateSpecialFarm        accYocPerShare: ${accYocPerShare}\n`);
 
     return data;
 }
@@ -273,7 +272,7 @@ const updateFarmDetailsByUser = async (userAddress, pId) => {
         }
         return state;
     } catch (e) {
-        console.log(e);
+        console.log("farm-updateFarmDetailsByUser", e);
         return false;
     }
 }
@@ -312,7 +311,7 @@ const userFarmDetailUpdateAllowance = async (req, res) => {
             farmId: farmId,
         }
     })
-    console.log(address, balance, farmId, liquidityId);
+    console.log("farm-userFarmDetailUpdateAllowance", address, balance, farmId, liquidityId);
     let state = 0;
     if (data) {
         state = await FarmDetail.update({
