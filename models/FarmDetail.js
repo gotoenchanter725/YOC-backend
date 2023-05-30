@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
         farmId: DataTypes.INTEGER,
         liquidityId: DataTypes.INTEGER,
         userAddress: DataTypes.STRING, 
-        allowance: DataTypes.BOOLEAN,
+        allowance: DataTypes.INTEGER,
         amount: DataTypes.STRING, 
 
         createdAt: {

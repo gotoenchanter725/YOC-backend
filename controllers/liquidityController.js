@@ -101,7 +101,7 @@ const stateLiquidity = async (req, res) => {
     }
 }
 
-// ====================== PUBLICK ======================
+// ====================== PUBLIC ======================
 
 const viewAllLiquidities = async (req, res) => {
     const liquidities = await Liquidity.findAll({
@@ -127,90 +127,9 @@ const viewAllLiquidities = async (req, res) => {
 }
 
 const scanMonitorLiquidities = async () => {
-    const liquidities = await Liquidity.findAll({
-        // order: [['createdAt', 'ASC']]
-        include: [
-            {
-                model: Currency,
-                as: 'currency0'
-            },
-            {
-                model: Currency,
-                as: 'currency1'
-            }
-        ]
-    })
-
-    let YocswapFactory = new Contract(
-        YOCSwapFactory.address,
-        YOCSwapFactory.abi,
-        getProvider()
-    )
-    liquidities.forEach(async (item) => {
-        let pairAddress = await YocswapFactory.getPair(item.currency0.address, item.currency1.address);
-        if (pairAddress == AddressZero) return;
-        let pairContract = new Contract(
-            pairAddress,
-            YOCPair.abi,
-            getProvider()
-        );
-        await updateSpecialLiquidity(pairContract, item);
-
-        await pairContract.on('Mint', async (sender, a0, a1, tx) => {
-            let liquidity = await updateSpecialLiquidity(pairContract, item);
-            updateLiquidityDetailsByUser(sender, item);
-        })
-        await pairContract.on('Burn', async (sender, a0, a1, tx) => {
-            let liquidity = await updateSpecialLiquidity(pairContract, item);
-            updateLiquidityDetailsByUser(sender, item);
-        })
-        await pairContract.on('Swap', async (sender, a0, a1, tx) => {
-            let liquidity = await updateSpecialLiquidity(pairContract, item);
-            if (liquidity.currency0.address == USDCToken.address) {
-                const currency = await Currency.update({
-                    price: 1 / liquidity.rate
-                }, {
-                    where: {
-                        address: liquidity.currency1.address
-                    }
-                })
-                console.log(`liquidity-scanMonitorLiquidities   Update USD price: ${liquidity.currency1.symbol} ${1 / liquidity.rate}`);
-            } else if (liquidity.currency1.address == USDCToken.address) {
-                const currency = await Currency.update({
-                    price: liquidity.rate
-                }, {
-                    where: {
-                        address: liquidity.currency0.address
-                    }
-                })
-                console.log(`liquidity-scanMonitorLiquidities   Update USD price: ${liquidity.currency0.symbol} ${liquidity.rate}`);
-            }
-        })
-    });
-
-    await YocswapFactory.on("PairCreated", async (token0, token1, pair, pid) => {
-        console.log(`liquidity-scanMonitorLiquidities   Detected New Pair! ${token0} ${token1}`)
-        const currency0 = (await Currency.findOne({
-            where: {
-                address: token0
-            }
-        })).id;
-        const currency1 = (await Currency.findOne({
-            where: {
-                address: token1
-            }
-        })).id;
-        console.log('liquidity-scanMonitorLiquidities  ' ,currency0, currency1);
-        await Liquidity.create({
-            poolId: pid - 1,
-            pairAddress: pair,
-            pairDecimals: 18,
-            pairSymbol: "Yoc-LP",
-            isYoc: token0 == YOC.address || token1 == YOC.address,
-            token0: currency0,
-            token1: currency1,
-        });
-        const item = await Liquidity.findOne({
+    try {
+        const liquidities = await Liquidity.findAll({
+            // order: [['createdAt', 'ASC']]
             include: [
                 {
                     model: Currency,
@@ -220,125 +139,218 @@ const scanMonitorLiquidities = async () => {
                     model: Currency,
                     as: 'currency1'
                 }
-            ],
-            where: {
-                poolId: pid - 1
-            }
+            ]
         })
 
-        let pairAddress = await YocswapFactory.getPair(item.currency0.address, item.currency1.address);
-        let pairContract = new Contract(
-            pairAddress,
-            YOCPair.abi,
+        let YocswapFactory = new Contract(
+            YOCSwapFactory.address,
+            YOCSwapFactory.abi,
             getProvider()
-        );
+        )
+        liquidities.forEach(async (item) => {
+            let pairAddress = await YocswapFactory.getPair(item.currency0.address, item.currency1.address);
+            if (pairAddress == AddressZero) return;
+            let pairContract = new Contract(
+                pairAddress,
+                YOCPair.abi,
+                getProvider()
+            );
+            await updateSpecialLiquidity(pairContract, item);
 
-        await updateSpecialLiquidity(pairContract, item);
+            await pairContract.on('Mint', async (sender, a0, a1, tx) => {
+                let liquidity = await updateSpecialLiquidity(pairContract, item);
+                updateLiquidityDetailsByUser(sender, item);
+            })
+            await pairContract.on('Burn', async (sender, a0, a1, tx) => {
+                let liquidity = await updateSpecialLiquidity(pairContract, item);
+                updateLiquidityDetailsByUser(sender, item);
+            })
+            await pairContract.on('Swap', async (sender, a0, a1, tx) => {
+                let liquidity = await updateSpecialLiquidity(pairContract, item);
+                if (liquidity.currency0.address == USDCToken.address) {
+                    const currency = await Currency.update({
+                        price: 1 / liquidity.rate
+                    }, {
+                        where: {
+                            address: liquidity.currency1.address
+                        }
+                    })
+                    console.log(`liquidity-scanMonitorLiquidities   Update USD price: ${liquidity.currency1.symbol} ${1 / liquidity.rate}`);
+                } else if (liquidity.currency1.address == USDCToken.address) {
+                    const currency = await Currency.update({
+                        price: liquidity.rate
+                    }, {
+                        where: {
+                            address: liquidity.currency0.address
+                        }
+                    })
+                    console.log(`liquidity-scanMonitorLiquidities   Update USD price: ${liquidity.currency0.symbol} ${liquidity.rate}`);
+                }
+            })
+        });
 
-        await pairContract.on('Mint', async (sender, a0, a1, tx) => {
-            let liquidity = await updateSpecialLiquidity(pairContract, item);
-            updateLiquidityDetailsByUser(sender, item);
+        await YocswapFactory.on("PairCreated", async (token0, token1, pair, pid) => {
+            console.log(`liquidity-scanMonitorLiquidities   Detected New Pair! ${token0} ${token1}`)
+            const currency0 = (await Currency.findOne({
+                where: {
+                    address: token0
+                }
+            })).id;
+            const currency1 = (await Currency.findOne({
+                where: {
+                    address: token1
+                }
+            })).id;
+            console.log('liquidity-scanMonitorLiquidities  ', currency0, currency1);
+            await Liquidity.create({
+                poolId: pid - 1,
+                pairAddress: pair,
+                pairDecimals: 18,
+                pairSymbol: "Yoc-LP",
+                isYoc: token0 == YOC.address || token1 == YOC.address,
+                token0: currency0,
+                token1: currency1,
+            });
+            const item = await Liquidity.findOne({
+                include: [
+                    {
+                        model: Currency,
+                        as: 'currency0'
+                    },
+                    {
+                        model: Currency,
+                        as: 'currency1'
+                    }
+                ],
+                where: {
+                    poolId: pid - 1
+                }
+            })
+
+            let pairAddress = await YocswapFactory.getPair(item.currency0.address, item.currency1.address);
+            let pairContract = new Contract(
+                pairAddress,
+                YOCPair.abi,
+                getProvider()
+            );
+
+            await updateSpecialLiquidity(pairContract, item);
+
+            await pairContract.on('Mint', async (sender, a0, a1, tx) => {
+                let liquidity = await updateSpecialLiquidity(pairContract, item);
+                updateLiquidityDetailsByUser(sender, item);
+            })
+            await pairContract.on('Burn', async (sender, a0, a1, tx) => {
+                let liquidity = await updateSpecialLiquidity(pairContract, item);
+                updateLiquidityDetailsByUser(sender, item);
+            })
+            await pairContract.on('Swap', async (sender, a0, a1, tx) => {
+                let liquidity = await updateSpecialLiquidity(pairContract, item);
+            })
         })
-        await pairContract.on('Burn', async (sender, a0, a1, tx) => {
-            let liquidity = await updateSpecialLiquidity(pairContract, item);
-            updateLiquidityDetailsByUser(sender, item);
-        })
-        await pairContract.on('Swap', async (sender, a0, a1, tx) => {
-            let liquidity = await updateSpecialLiquidity(pairContract, item);
-        })
-    })
+    } catch (err) {
+        console.log("liquidity-scanMonitorLiquidities", err);
+    }
 }
 
 const updateSpecialLiquidity = async (pairContract, liquidityPairData) => {
-    let pairSymbol = await pairContract.symbol();
-    let token0Address = await pairContract.token0();
-    let token1Address = await pairContract.token1();
-    let amount = convertWeiToEth(await pairContract.totalSupply(), 18);
-    let result = await pairContract.getReserves();
-    let amount0, amount1;
-    amount0 = convertWeiToEth(result._reserve0, liquidityPairData.currency0.decimals);
-    amount1 = convertWeiToEth(result._reserve1, liquidityPairData.currency1.decimals);
-    if (liquidityPairData.currency0.address.toLocaleLowerCase() != token0Address.toLocaleLowerCase()) {
-        let temp = amount1;
-        amount1 = amount0;
-        amount0 = temp;
-    }
-    let rate = amount0 / amount1;
-
-    let data = {
-        ...liquidityPairData,
-        amount,
-        amount0,
-        amount1,
-        rate,
-
-        pairAddress: pairContract.address,
-        pairSymbol,
-        isYoc: liquidityPairData.currency0.address == YOC.address || liquidityPairData.currency1.address == YOC.address,
-        pairDecimals: 18
-    }
-
-    let state = await Liquidity.update({ ...data }, {
-        where: {
-            id: liquidityPairData.id
+    try {
+        let pairSymbol = await pairContract.symbol();
+        let token0Address = await pairContract.token0();
+        let token1Address = await pairContract.token1();
+        let amount = convertWeiToEth(await pairContract.totalSupply(), 18);
+        let result = await pairContract.getReserves();
+        let amount0, amount1;
+        amount0 = convertWeiToEth(result._reserve0, liquidityPairData.currency0.decimals);
+        amount1 = convertWeiToEth(result._reserve1, liquidityPairData.currency1.decimals);
+        if (liquidityPairData.currency0.address.toLocaleLowerCase() != token0Address.toLocaleLowerCase()) {
+            let temp = amount1;
+            amount1 = amount0;
+            amount0 = temp;
         }
-    })
-    console.log(`liquidity-updateSpecialLiquidity  Update liquidity: ${liquidityPairData.currency0.symbol}/${liquidityPairData.currency1.symbol}`);
-    console.log(`liquidity-updateSpecialLiquidity            amount: ${amount}`);
-    console.log(`liquidity-updateSpecialLiquidity           ${liquidityPairData.token0} amount0 ${token0Address} : ${liquidityPairData.currency0.address} : ${liquidityPairData.currency0.symbol} : ${amount0}`);
-    console.log(`liquidity-updateSpecialLiquidity           ${liquidityPairData.token1} amount1 ${token1Address} : ${liquidityPairData.currency1.address} : ${liquidityPairData.currency1.symbol} : ${amount1}`);
-    console.log(`liquidity-updateSpecialLiquidity              rate: ${rate}\n`);
+        let rate = amount0 / amount1;
 
-    
-    if (liquidityPairData.currency0.address == USDCToken.address) {
-        const currency = await Currency.update({
-            price: 1 / liquidityPairData.rate
-        }, {
+        let data = {
+            ...liquidityPairData,
+            amount,
+            amount0,
+            amount1,
+            rate,
+
+            pairAddress: pairContract.address,
+            pairSymbol,
+            isYoc: liquidityPairData.currency0.address == YOC.address || liquidityPairData.currency1.address == YOC.address,
+            pairDecimals: 18
+        }
+
+        let state = await Liquidity.update({ ...data }, {
             where: {
-                address: liquidityPairData.currency1.address
+                id: liquidityPairData.id
             }
         })
-        console.log(`liquidity-updateSpecialLiquidity  Update USD price: ${liquidityPairData.currency1.symbol} ${1 / liquidityPairData.rate}`);
-    } else if (liquidityPairData.currency1.address == USDCToken.address) {
-        const currency = await Currency.update({
-            price: liquidityPairData.rate
-        }, {
-            where: {
-                address: liquidityPairData.currency0.address
-            }
-        })
-        console.log(`liquidity-updateSpecialLiquidity  Update USD price: ${liquidityPairData.currency0.symbol} ${liquidityPairData.rate}`);
+        console.log(`liquidity-updateSpecialLiquidity  Update liquidity: ${liquidityPairData.currency0.symbol}/${liquidityPairData.currency1.symbol}`);
+        console.log(`liquidity-updateSpecialLiquidity            amount: ${amount}`);
+        console.log(`liquidity-updateSpecialLiquidity           ${liquidityPairData.token0} amount0 ${token0Address} : ${liquidityPairData.currency0.address} : ${liquidityPairData.currency0.symbol} : ${amount0}`);
+        console.log(`liquidity-updateSpecialLiquidity           ${liquidityPairData.token1} amount1 ${token1Address} : ${liquidityPairData.currency1.address} : ${liquidityPairData.currency1.symbol} : ${amount1}`);
+        console.log(`liquidity-updateSpecialLiquidity              rate: ${rate}\n`);
+
+
+        if (liquidityPairData.currency0.address == USDCToken.address) {
+            const currency = await Currency.update({
+                price: 1 / liquidityPairData.rate
+            }, {
+                where: {
+                    address: liquidityPairData.currency1.address
+                }
+            })
+            console.log(`liquidity-updateSpecialLiquidity  Update USD price: ${liquidityPairData.currency1.symbol} ${1 / liquidityPairData.rate}`);
+        } else if (liquidityPairData.currency1.address == USDCToken.address) {
+            const currency = await Currency.update({
+                price: liquidityPairData.rate
+            }, {
+                where: {
+                    address: liquidityPairData.currency0.address
+                }
+            })
+            console.log(`liquidity-updateSpecialLiquidity  Update USD price: ${liquidityPairData.currency0.symbol} ${liquidityPairData.rate}`);
+        }
+
+        return data;
+    } catch (err) {
+        console.log("liquidity-updateSpecialLiquidity", err);
     }
-
-    return data;
 }
 
 const updateLiquidityDetailsByUser = async (userAddress, liquidityPairData) => {
-    console.log("liquidity-updateLiquidityDetailsByUser: ", userAddress, liquidityPairData.id);
-    let data = await LiquidityDetail.findOne({
-        where: {
-            userAddress: userAddress,
-            liquidityId: liquidityPairData.id
-        }
-    })
-    let state = 0;
-    if (data) {
-        state = await LiquidityDetail.update({
-            isActive: true
-        }, {
+    try {
+        console.log("liquidity-updateLiquidityDetailsByUser: ", userAddress, liquidityPairData.id);
+        let data = await LiquidityDetail.findOne({
             where: {
                 userAddress: userAddress,
-                liquidityId: liquidityPairData.id,
+                liquidityId: liquidityPairData.id
             }
         })
-    } else {
-        state = await LiquidityDetail.create({
-            liquidityId: liquidityPairData.id,
-            userAddress: userAddress,
-            isActive: true
-        })
+        let state = 0;
+        if (data) {
+            state = await LiquidityDetail.update({
+                isActive: true
+            }, {
+                where: {
+                    userAddress: userAddress,
+                    liquidityId: liquidityPairData.id,
+                }
+            })
+        } else {
+            state = await LiquidityDetail.create({
+                liquidityId: liquidityPairData.id,
+                userAddress: userAddress,
+                isActive: true
+            })
+        }
+        return state;
+    } catch (err) {
+        console.log("liquidity-updateLiquidityDetailsByUser", err);
     }
-    return state;
 }
 
 const rateLiquidity = async (req, res) => {
@@ -374,49 +386,53 @@ const rateLiquidity = async (req, res) => {
 }
 
 const userLiquidity = async (req, res) => {
-    const { address } = req.query;
-    let liquidityData = await LiquidityDetail.findAll({
-        include: [
-            {
-                model: Liquidity,
-                as: 'liquidity'
-            },
-        ],
-        where: {
-            userAddress: address,
-            isActive: true
-        }
-    })
-    for (let i = 0; i < liquidityData.length; i++) {
-        let item = liquidityData[i];
-        const pairContract = new Contract(
-            item.liquidity.pairAddress,
-            YOCPair.abi,
-            getProvider()
-        )
-        let balance = convertWeiToEth(await pairContract.balanceOf(address), 18);
-        item.userLPAmount = balance;
-        let currency0 = await Currency.findOne({
+    try {
+        const { address } = req.query;
+        let liquidityData = await LiquidityDetail.findAll({
+            include: [
+                {
+                    model: Liquidity,
+                    as: 'liquidity'
+                },
+            ],
             where: {
-                id: item.liquidity.token0
+                userAddress: address,
+                isActive: true
             }
-        });
-        let currency1 = await Currency.findOne({
-            where: {
-                id: item.liquidity.token1
+        })
+        for (let i = 0; i < liquidityData.length; i++) {
+            let item = liquidityData[i];
+            const pairContract = new Contract(
+                item.liquidity.pairAddress,
+                YOCPair.abi,
+                getProvider()
+            )
+            let balance = convertWeiToEth(await pairContract.balanceOf(address), 18);
+            item.userLPAmount = balance;
+            let currency0 = await Currency.findOne({
+                where: {
+                    id: item.liquidity.token0
+                }
+            });
+            let currency1 = await Currency.findOne({
+                where: {
+                    id: item.liquidity.token1
+                }
+            });
+            liquidityData[i] = {
+                LPBalance: balance,
+                item,
+                currency0,
+                currency1,
+                isActive: balance != 0
             }
-        });
-        liquidityData[i] = {
-            LPBalance: balance,
-            item,
-            currency0,
-            currency1,
-            isActive: balance != 0
         }
+        return res.status(200).json({
+            liquidityData: liquidityData.filter((item) => item.isActive)
+        })
+    } catch (err) {
+        console.log("liquidity-userLiquidity", err);
     }
-    return res.status(200).json({
-        liquidityData: liquidityData.filter((item) => item.isActive)
-    })
 }
 
 module.exports = {

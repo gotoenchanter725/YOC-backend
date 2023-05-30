@@ -133,7 +133,7 @@
           "type": "uint256"
         }
       ],
-      "name": "mintToMasterChef",
+      "name": "mintAndTransferToThere",
       "outputs": [
         {
           "internalType": "bool",

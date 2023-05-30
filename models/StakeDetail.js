@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
         stakeId: DataTypes.INTEGER,
         tokenId: DataTypes.INTEGER,
         userAddress: DataTypes.STRING,
-        allowance: DataTypes.BOOLEAN,
+        allowance: DataTypes.INTEGER,
         amount: DataTypes.STRING,
 
         createdAt: {

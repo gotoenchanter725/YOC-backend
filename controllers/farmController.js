@@ -148,132 +148,144 @@ const viewAllFarms = async (req, res) => {
 }
 
 const scanMonitorFarms = async () => {
-    const farmPools = await FarmPool.findAll({
-        // order: [['createdAt', 'ASC']]
-        include: [
-            {
-                model: Liquidity,
-                as: 'liquidity',
-                include: [
-                    {
-                        model: Currency,
-                        as: 'currency0'
-                    },
-                    {
-                        model: Currency,
-                        as: 'currency1'
-                    }
-                ]
-            }
-        ]
-    })
-
-    let YOCFarmContract = new Contract(
-        YOCFarm.address,
-        YOCFarm.abi,
-        getProvider()
-    )
-    farmPools.forEach(async (item) => {
-        let poolInfo = await YOCFarmContract.poolInfo(item.poolId);
-        await updateSpecialFarm(poolInfo, item.poolId);
-    });
-
-    await YOCFarmContract.on('Deposit', async (sender, pId, amount) => {
-        let poolInfo = await YOCFarmContract.poolInfo(pId);
-        await updateSpecialFarm(poolInfo, pId);
-
-        await updateFarmDetailsByUser(sender, pId, YOCFarmContract);
-    })
-    await YOCFarmContract.on('Withdraw', async (sender, pId, amount, yocAmount) => {
-        let poolInfo = await YOCFarmContract.poolInfo(pId);
-        await updateSpecialFarm(poolInfo, pId);
-
-        await updateFarmDetailsByUser(sender, pId, YOCFarmContract);
-    })
-
-
-    await YOCFarmContract.on('AddPool', async (pId, allocPoint, pairAddress, isYoc) => {
-        console.log("farm-scanFarms", "<=========Farm&Stake Add Pool=======>")
-        let poolInfo = await YOCFarmContract.poolInfo(pId);
-
-        const liquidity = await Liquidity.findOne({
-            where: {
-                pairAddress: pairAddress
-            }
-        })
-        if (liquidity) {
-            // Farm Pool Added
-            console.log("farm-scanFarms", '<============= Farm Pool Added ===========>')
-            const pool = await FarmPool.create({
-                liquidityId: liquidity.id,
-                poolId: pId,
-                allocPoint: allocPoint,
-                totalLPAmount: 0,
-                accYocPerShare: 0
-                // isActive: true,
-            })
-        } else {
-            // Stake Pool Added
-            console.log("farm-scanFarms", '<============= Stake Pool Added ===========>')
-        }
-    })
-}
-
-const updateSpecialFarm = async (poolInfo, pId) => {
-    let totalLPAmount = convertWeiToEth(poolInfo.totalShare, 18);
-    let accYocPerShare = convertWeiToEth(poolInfo.accYocPerShare, 18);
-    let data = {
-        totalLPAmount,
-        accYocPerShare
-    }
-
-    let state = await FarmPool.update({ ...data }, {
-        where: {
-            poolId: pId
-        }
-    })
-    console.log(`farm-updateSpecialFarm   Update FarmPool pId: ${pId}`);
-    console.log(`farm-updateSpecialFarm         totalLPAmount: ${totalLPAmount}`);
-    console.log(`farm-updateSpecialFarm        accYocPerShare: ${accYocPerShare}\n`);
-
-    return data;
-}
-
-const updateFarmDetailsByUser = async (userAddress, pId) => {
     try {
+        const farmPools = await FarmPool.findAll({
+            // order: [['createdAt', 'ASC']]
+            include: [
+                {
+                    model: Liquidity,
+                    as: 'liquidity',
+                    include: [
+                        {
+                            model: Currency,
+                            as: 'currency0'
+                        },
+                        {
+                            model: Currency,
+                            as: 'currency1'
+                        }
+                    ]
+                }
+            ]
+        })
+
         let YOCFarmContract = new Contract(
             YOCFarm.address,
             YOCFarm.abi,
             getProvider()
         )
+        farmPools.forEach(async (item) => {
+            let poolInfo = await YOCFarmContract.poolInfo(item.poolId);
+            await updateSpecialFarm(poolInfo, item.poolId);
+        });
 
-        let userInfo = await YOCFarmContract.userInfo(pId, userAddress);
-        let userAmount = convertWeiToEth(userInfo.amount, 18);
+        await YOCFarmContract.on('Deposit', async (sender, pId, amount) => {
+            let poolInfo = await YOCFarmContract.poolInfo(pId);
+            await updateSpecialFarm(poolInfo, pId);
 
-        let data = await FarmPool.findOne({
+            await updateFarmDetailsByUser(sender, pId, YOCFarmContract);
+        })
+        await YOCFarmContract.on('Withdraw', async (sender, pId, amount, yocAmount) => {
+            let poolInfo = await YOCFarmContract.poolInfo(pId);
+            await updateSpecialFarm(poolInfo, pId);
+
+            await updateFarmDetailsByUser(sender, pId, YOCFarmContract);
+        })
+
+
+        await YOCFarmContract.on('AddPool', async (pId, allocPoint, pairAddress, isYoc) => {
+            console.log("farm-scanFarms", "<=========Farm&Stake Add Pool=======>")
+            let poolInfo = await YOCFarmContract.poolInfo(pId);
+
+            const liquidity = await Liquidity.findOne({
+                where: {
+                    pairAddress: pairAddress
+                }
+            })
+            if (liquidity) {
+                // Farm Pool Added
+                console.log("farm-scanFarms", '<============= Farm Pool Added ===========>')
+                const pool = await FarmPool.create({
+                    liquidityId: liquidity.id,
+                    poolId: pId,
+                    allocPoint: allocPoint,
+                    totalLPAmount: 0,
+                    accYocPerShare: 0
+                    // isActive: true,
+                })
+            } else {
+                // Stake Pool Added
+                console.log("farm-scanFarms", '<============= Stake Pool Added ===========>')
+            }
+        })
+    } catch (err) {
+        console.log("farm-scanMonitorFarms", err);
+    }
+}
+
+const updateSpecialFarm = async (poolInfo, pId) => {
+    try {
+        let totalLPAmount = convertWeiToEth(poolInfo.totalShare, 18);
+        let accYocPerShare = convertWeiToEth(poolInfo.accYocPerShare, 18);
+        let data = {
+            totalLPAmount,
+            accYocPerShare
+        }
+
+        let state = await FarmPool.update({ ...data }, {
             where: {
                 poolId: pId
             }
         })
-        let state = 0;
-        if (data) {
-            state = await FarmDetail.update({
-                isActive: true,
-                amount: userAmount,
-                liquidityId: data.liquidityId
-            }, {
+        console.log(`farm-updateSpecialFarm   Update FarmPool pId: ${pId}`);
+        console.log(`farm-updateSpecialFarm         totalLPAmount: ${totalLPAmount}`);
+        console.log(`farm-updateSpecialFarm        accYocPerShare: ${accYocPerShare}\n`);
+
+        return data;
+    } catch (err) {
+        console.log("farm-updateSpecialFarm", err);
+    }
+}
+
+const updateFarmDetailsByUser = async (userAddress, pId) => {
+    try {
+        try {
+            let YOCFarmContract = new Contract(
+                YOCFarm.address,
+                YOCFarm.abi,
+                getProvider()
+            )
+
+            let userInfo = await YOCFarmContract.userInfo(pId, userAddress);
+            let userAmount = convertWeiToEth(userInfo.amount, 18);
+
+            let data = await FarmPool.findOne({
                 where: {
-                    userAddress: userAddress,
-                    farmId: data.id,
+                    poolId: pId
                 }
             })
-        } else {
-            state = false;
+            let state = 0;
+            if (data) {
+                state = await FarmDetail.update({
+                    isActive: true,
+                    amount: userAmount,
+                    liquidityId: data.liquidityId
+                }, {
+                    where: {
+                        userAddress: userAddress,
+                        farmId: data.id,
+                    }
+                })
+            } else {
+                state = false;
+            }
+            return state;
+        } catch (e) {
+            console.log("farm-updateFarmDetailsByUser", e);
+            return false;
         }
-        return state;
-    } catch (e) {
-        console.log("farm-updateFarmDetailsByUser", e);
-        return false;
+    } catch (err) {
+        console.log("farm-updateFarmDetailsByUser", err)
     }
 }
 
