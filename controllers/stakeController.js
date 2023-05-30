@@ -31,6 +31,7 @@ const addStake = async (req, res) => {
 
     if (account == AdminWalletAddress) {
         try {
+            if (!req.body.tokenId || !req.body.allocPoint) throw "invalid parameter";
             const currency = await Currency.findOne({
                 where: {
                     id: req.body.tokenId

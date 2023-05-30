@@ -330,6 +330,7 @@ const updateLiquidityDetailsByUser = async (userAddress, liquidityPairData) => {
                 liquidityId: liquidityPairData.id
             }
         })
+        console.log(data);
         let state = 0;
         if (data) {
             state = await LiquidityDetail.update({

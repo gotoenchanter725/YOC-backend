@@ -5,7 +5,7 @@ const { ProjectManager, YOCSwapFactory, YOC, USDCToken, YOCSwapRouter, YOCPair, 
 const _ = require("lodash");
 var format = require('date-format');
 
-const storeYocPricePer20mins = async () => {
+const storeYocPricePerHour = async () => {
     try {
         let swapContract = new Contract(
             YOCSwapRouter.address,
@@ -18,14 +18,14 @@ const storeYocPricePer20mins = async () => {
             for (let i = 0; i < 10; i++) {
                 let res = await swapContract.getExpectLiquidityAmount(YOC.address, USDCToken.address, convertEthToWei('1', YOC.decimals));
                 let yPrice = convertWeiToEth(res, USDCToken.decimals);
-                // console.log(i + 1, +yPrice);
+                console.log("chart-storeYocPricePerHour", i + 1, +yPrice);
                 t_prices.push(+yPrice);
-                // console.log(format('yyyy-MM-dd hh:mm:ss', new Date()));
-                await delay(1000 * 10);
+                console.log("chart-storeYocPricePerHour", format('yyyy-MM-dd hh:mm:ss', new Date()));
+                await delay(1000 * 60 * 2);
             }
             toDate = new Date();
-            console.log("chart-storeYocPricePer20mins", "<===== Save Data ====>")
-            console.log("chart-storeYocPricePer20mins", {
+            console.log("chart-storeYocPricePerHour", "<===== Save Data ====>")
+            console.log("chart-storeYocPricePerHour", {
                 high: _.max(t_prices),
                 low: _.min(t_prices),
                 from: t_prices[0],
@@ -47,29 +47,30 @@ const storeYocPricePer20mins = async () => {
                 toDate: format('yyyy-MM-dd hh:mm:ss', new Date()),
                 datetime: format('yyyy-MM-dd hh:mm:ss', fromDate),
             });
-            await delay(1000 * 60);
         }
     } catch (err) {
-        console.log("chart-storeYocPricePer20mins", err);
+        console.log("chart-storeYocPricePerHour", err);
     }
 }
 
-const storeTVLPer20mins = async () => {
+const storeTVLPerHour = async () => {
     try {
         while (true) {
             let t_prices = [], fromDate = new Date();
             for (let i = 0; i < 20; i++) {
                 let tPrice = 0;
                 tPrice += await getTotalUSD();
-                // tPrice += await getTotalUSDOfFunds();
-                console.log("chart-storeTVLPer20mins", "Price:", tPrice);
-                console.log("chart-storeTVLPer20mins", i + 1, +tPrice);
+                tPrice += await getTotalUSDOfFunds();
+                console.log("chart-storeTVLPerHour", "Price:", tPrice);
+                console.log("chart-storeTVLPerHour", i + 1, +tPrice);
                 t_prices.push(+tPrice);
-                console.log("chart-storeTVLPer20mins", format('yyyy-MM-dd hh:mm:ss', new Date()));
+                console.log("chart-storeTVLPerHour", format('yyyy-MM-dd hh:mm:ss', new Date()));
+                console.log("delay per one loop")
+                await delay(1000 * 60 * 2);
             }
             toDate = new Date();
-            console.log("chart-storeTVLPer20mins", "<===== Save Data ====>")
-            console.log("chart-storeTVLPer20mins", {
+            console.log("chart-storeTVLPerHour", "<===== Save Data ====>")
+            console.log("chart-storeTVLPerHour", {
                 high: _.max(t_prices),
                 low: _.min(t_prices),
                 from: t_prices[0],
@@ -91,11 +92,10 @@ const storeTVLPer20mins = async () => {
                 toDate: format('yyyy-MM-dd hh:mm:ss', new Date()),
                 datetime: format('yyyy-MM-dd hh:mm:ss', fromDate),
             });
-            console.log("chart-storeTVLPer20mins", "Save TVL")
-            await delay(1000 * 60 * 10);
+            console.log("chart-storeTVLPerHour", "Save TVL")
         }
     } catch (err) {
-        console.log("chart-storeTVLPer20mins", err);
+        console.log("chart-storeTVLPerHour", err);
     }
 }
 
@@ -111,64 +111,64 @@ const getTotalUSD = async () => {
             YOCSwapFactory.abi,
             getProvider()
         );
-        // let poolLength = await swapFactoryContract.allPairsLength();
-        // console.log("chart-getTotalUSD", "FarmsPools: ", + poolLength);
+        let poolLength = await swapFactoryContract.allPairsLength();
+        console.log("chart-getTotalUSD", "FarmsPools: ", + poolLength);
 
         let totalUSD = 0;
 
-        // for (let i = 0; i < poolLength; i++) {
-        //     let pairAddress = await swapFactoryContract.allPairs(i);
-        //     let pairContract = new Contract(
-        //         pairAddress,
-        //         YOCPair.abi,
-        //         getProvider()
-        //     )
-        //     let token0Address = await pairContract.token0();
-        //     let token1Address = await pairContract.token1();
-        //     let token0Contract = new Contract(
-        //         token0Address,
-        //         TokenTemplate.abi,
-        //         getProvider()
-        //     )
-        //     let token0Decimal = await token0Contract.decimals();
-        //     let token1Contract = new Contract(
-        //         token1Address,
-        //         TokenTemplate.abi,
-        //         getProvider()
-        //     )
-        //     let token1Decimal = await token1Contract.decimals();
+        for (let i = 0; i < poolLength; i++) {
+            let pairAddress = await swapFactoryContract.allPairs(i);
+            let pairContract = new Contract(
+                pairAddress,
+                YOCPair.abi,
+                getProvider()
+            )
+            let token0Address = await pairContract.token0();
+            let token1Address = await pairContract.token1();
+            let token0Contract = new Contract(
+                token0Address,
+                TokenTemplate.abi,
+                getProvider()
+            )
+            let token0Decimal = await token0Contract.decimals();
+            let token1Contract = new Contract(
+                token1Address,
+                TokenTemplate.abi,
+                getProvider()
+            )
+            let token1Decimal = await token1Contract.decimals();
 
-        //     let amount0 = convertWeiToEth(await token0Contract.balanceOf(pairAddress), token0Decimal);
-        //     let amount1 = convertWeiToEth(await token1Contract.balanceOf(pairAddress), token1Decimal);
+            let amount0 = convertWeiToEth(await token0Contract.balanceOf(pairAddress), token0Decimal);
+            let amount1 = convertWeiToEth(await token1Contract.balanceOf(pairAddress), token1Decimal);
 
-        //     let usdBalance = 0;
+            let usdBalance = 0;
 
-        //     if (token0Address != USDCToken.address) {
-        //         usdBalance += Number(convertWeiToEth((await swapRouterContract.getAmountsOut(
-        //             convertEthToWei(amount0, token0Decimal),
-        //             [
-        //                 token0Address,
-        //                 USDCToken.address
-        //             ]
-        //         ))[1], USDCToken.decimals));
-        //     } else {
-        //         usdBalance += Number(amount0)
-        //     }
+            if (token0Address != USDCToken.address) {
+                usdBalance += Number(convertWeiToEth((await swapRouterContract.getAmountsOut(
+                    convertEthToWei(amount0, token0Decimal),
+                    [
+                        token0Address,
+                        USDCToken.address
+                    ]
+                ))[1], USDCToken.decimals));
+            } else {
+                usdBalance += Number(amount0)
+            }
 
-        //     if (token1Address != USDCToken.address) {
-        //         usdBalance += Number(convertWeiToEth((await swapRouterContract.getAmountsOut(
-        //             convertEthToWei(amount1, token1Decimal),
-        //             [
-        //                 token1Address,
-        //                 USDCToken.address
-        //             ]
-        //         ))[1], USDCToken.decimals));
-        //     } else {
-        //         usdBalance += Number(amount1)
-        //     }
-        //     console.log("Pair:", usdBalance);
-        //     totalUSD += usdBalance;
-        // }
+            if (token1Address != USDCToken.address) {
+                usdBalance += Number(convertWeiToEth((await swapRouterContract.getAmountsOut(
+                    convertEthToWei(amount1, token1Decimal),
+                    [
+                        token1Address,
+                        USDCToken.address
+                    ]
+                ))[1], USDCToken.decimals));
+            } else {
+                usdBalance += Number(amount1)
+            }
+            console.log("Pair:", usdBalance);
+            totalUSD += usdBalance;
+        }
 
         const poolsData = await StakePool.findAll({
             include: [
@@ -249,6 +249,7 @@ const getTotalUSDOfFunds = async () => {
                 const investTokenSymbol = await investContract.symbol();
                 const investTokenDecimals = await investContract.decimals();
                 const investTokenBalanceOfProject = convertWeiToEth(await investContract.balanceOf(projects[i]), investTokenDecimals);
+                console.log(investTokenAddress, USDCToken.address, investTokenBalanceOfProject)
                 if (investTokenAddress != USDCToken.address && investTokenBalanceOfProject) {
                     usdBalance += Number(convertWeiToEth((await swapRouterContract.getAmountsOut(
                         convertEthToWei(investTokenBalanceOfProject, investTokenDecimals),
@@ -273,6 +274,6 @@ const getTotalUSDOfFunds = async () => {
 }
 
 module.exports = {
-    storeYocPricePer20mins,
-    storeTVLPer20mins
+    storeYocPricePerHour,
+    storeTVLPerHour
 }

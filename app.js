@@ -18,7 +18,7 @@ const adminLiqudityRouter = require('./routes/admin/liquidityRouter');
 const adminFarmRouter = require('./routes/admin/farmRouter');
 const adminStakeRouter = require('./routes/admin/stakeRouter');
 
-const { storeYocPricePer20mins, storeTVLPer20mins } = require("./controllers/chartController");
+const { storeYocPricePerHour, storeTVLPerHour } = require("./controllers/chartController");
 const { scanMonitorLiquidities } = require("./controllers/liquidityController");
 const { scanMonitorFarms } = require("./controllers/farmController");
 const { scanMonitorStakes } = require("./controllers/stakeController");
@@ -54,9 +54,9 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}.`);
 
-    storeYocPricePer20mins();
-    storeTVLPer20mins();
-    scanMonitorLiquidities();
-    scanMonitorFarms();
-    scanMonitorStakes();
+    storeYocPricePerHour();
+    // storeTVLPerHour();
+    // scanMonitorLiquidities();
+    // scanMonitorFarms();
+    // scanMonitorStakes();
 });

@@ -42,6 +42,7 @@ const addFarm = async (req, res) => {
     if (account == AdminWalletAddress) {
         const signer = new ethers.Wallet(PRIVATE_KEY, getProvider());
         try {
+            if (!req.body.allocPoint || !req.body.pairAddress) throw "invalid parameter";
             const YocFarmContract = new ethers.Contract(YOCFarm.address, YOCFarm.abi, signer);
             console.log("farm-addFarm", allocPoint, pairAddress, isYoc);
             await YocFarmContract.add(
