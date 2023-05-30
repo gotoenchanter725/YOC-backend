@@ -16,7 +16,7 @@ module.exports = {
   "test": {
     "username": "root",
     "password": "friend.b617",
-    "database": "yocdb",
+    "database": database,
     "host": "127.0.0.1",
     "dialect": "mysql", 
     'freezeTableName': true, 
@@ -25,7 +25,7 @@ module.exports = {
   "production": {
     "username": "root",
     "password": null,
-    "database": "yocdb",
+    "database": database,
     "host": "127.0.0.1",
     "dialect": "mysql", 
     'freezeTableName': true, 
