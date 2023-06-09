@@ -19,7 +19,7 @@ module.exports = {
       },
       allowance: {
         allowNull: false,
-        type: Sequelize.BOOLEAN,
+        type: Sequelize.INTEGER,
       },
       amount: {
         allowNull: false,

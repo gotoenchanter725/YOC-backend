@@ -3,7 +3,7 @@ module.exports = (sequelize, DataTypes) => {
     const LiquidityDetailModel = sequelize.define('LiquidityDetail', {
         liquidityId: DataTypes.INTEGER,
         userAddress: DataTypes.STRING, 
-        allowance: DataTypes.BOOLEAN,
+        allowance: DataTypes.INTEGER,
         amount: DataTypes.STRING, 
         isActive: {
           type: DataTypes.BOOLEAN,

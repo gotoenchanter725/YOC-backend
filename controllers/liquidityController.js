@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const { delay, convertWeiToEth, convertEthToWei, getProvider } = require('../untils');
 const { Contract, BigNumber, constants, utils, ethers } = require('ethers');
 const { MaxUint256, AddressZero, Zero } = constants;
@@ -63,6 +64,73 @@ const editLiquidity = async (req, res) => {
         })
     } else {
         return res.status(500).json({ error: 'you are not admin' })
+    }
+}
+
+const importLiquidity = async (req, res) => {
+    const { account, currency0: currency0Address, currency1: currency1Address } = req.body;
+
+    if (account && currency0Address && currency1Address) {
+        console.log(account, currency0Address, currency1Address);
+        let liquidityPool = await Liquidity.findOne({
+            include: [
+                {
+                    model: Currency,
+                    as: 'currency0',
+                    where: {
+                        address: [currency0Address, currency1Address]
+                    }
+                },
+                {
+                    model: Currency,
+                    as: 'currency1',
+                    where: {
+                        address: [currency0Address, currency1Address]
+                    }
+                }
+            ],
+            where: {
+                [Op.or]: [
+                    {
+                        '$currency0.address$': currency0Address,
+                        '$currency1.address$': currency1Address,
+                    },
+                    {
+                        '$currency0.address$': currency1Address,
+                        '$currency1.address$': currency0Address,
+                    }
+                ]
+            }
+        })
+
+        if (liquidityPool) {
+
+            let userDetailOfLiquidity = await LiquidityDetail.findOne({
+                where: {
+                    liquidityId: liquidityPool.id,
+                    userAddress: account
+                }
+            })
+            if (userDetailOfLiquidity) {
+                await userDetailOfLiquidity.update({
+                    isActive: true
+                });
+            } else {
+                let newUserDetailOfLiquidity = await LiquidityDetail.create({
+                    liquidityId: liquidityPool.id,
+                    userAddress: account,
+                    isActive: true
+                })
+            }
+            return res.status(200).json({
+                liquidityPool
+            })
+        } else {
+            return res.status(204).json()
+        }
+
+    } else {
+        return res.status(500).json({ error: 'invalid param' })
     }
 }
 
@@ -157,34 +225,34 @@ const scanMonitorLiquidities = async () => {
             );
             await updateSpecialLiquidity(pairContract, item);
 
-            await pairContract.on('Mint', async (sender, a0, a1, tx) => {
+            await pairContract.on('Mint', async (sender, a0, a1, to) => {
                 let liquidity = await updateSpecialLiquidity(pairContract, item);
-                updateLiquidityDetailsByUser(sender, item);
+                updateLiquidityDetailsByUser(to, item);
             })
-            await pairContract.on('Burn', async (sender, a0, a1, tx) => {
+            await pairContract.on('Burn', async (sender, a0, a1, to) => {
                 let liquidity = await updateSpecialLiquidity(pairContract, item);
-                updateLiquidityDetailsByUser(sender, item);
+                updateLiquidityDetailsByUser(to, item);
             })
-            await pairContract.on('Swap', async (sender, a0, a1, tx) => {
+            await pairContract.on('Swap', async (sender, in0, in1, out0, out1, to) => {
                 let liquidity = await updateSpecialLiquidity(pairContract, item);
                 if (liquidity.currency0.address == USDCToken.address) {
                     const currency = await Currency.update({
-                        price: 1 / liquidity.rate
+                        price: liquidity.rate
                     }, {
                         where: {
                             address: liquidity.currency1.address
                         }
                     })
-                    console.log(`liquidity-scanMonitorLiquidities   Update USD price: ${liquidity.currency1.symbol} ${1 / liquidity.rate}`);
+                    console.log(`liquidity-scanMonitorLiquidities   Update USD price: ${liquidity.currency1.symbol} ${liquidity.rate}`);
                 } else if (liquidity.currency1.address == USDCToken.address) {
                     const currency = await Currency.update({
-                        price: liquidity.rate
+                        price: 1 / liquidity.rate
                     }, {
                         where: {
                             address: liquidity.currency0.address
                         }
                     })
-                    console.log(`liquidity-scanMonitorLiquidities   Update USD price: ${liquidity.currency0.symbol} ${liquidity.rate}`);
+                    console.log(`liquidity-scanMonitorLiquidities   Update USD price: ${liquidity.currency0.symbol} ${1 / liquidity.rate}`);
                 }
             })
         });
@@ -236,16 +304,35 @@ const scanMonitorLiquidities = async () => {
 
             await updateSpecialLiquidity(pairContract, item);
 
-            await pairContract.on('Mint', async (sender, a0, a1, tx) => {
+            await pairContract.on('Mint', async (sender, a0, a1, to) => {
                 let liquidity = await updateSpecialLiquidity(pairContract, item);
-                updateLiquidityDetailsByUser(sender, item);
+                updateLiquidityDetailsByUser(to, item);
             })
-            await pairContract.on('Burn', async (sender, a0, a1, tx) => {
+            await pairContract.on('Burn', async (sender, a0, a1, to) => {
                 let liquidity = await updateSpecialLiquidity(pairContract, item);
-                updateLiquidityDetailsByUser(sender, item);
+                updateLiquidityDetailsByUser(to, item);
             })
-            await pairContract.on('Swap', async (sender, a0, a1, tx) => {
+            await pairContract.on('Swap', async (sender, in0, in1, out0, out1, to) => {
                 let liquidity = await updateSpecialLiquidity(pairContract, item);
+                if (liquidity.currency0.address == USDCToken.address) {
+                    const currency = await Currency.update({
+                        price: liquidity.rate
+                    }, {
+                        where: {
+                            address: liquidity.currency1.address
+                        }
+                    })
+                    console.log(`liquidity-scanMonitorLiquidities   Update USD price: ${liquidity.currency1.symbol} ${liquidity.rate}`);
+                } else if (liquidity.currency1.address == USDCToken.address) {
+                    const currency = await Currency.update({
+                        price: 1 / liquidity.rate
+                    }, {
+                        where: {
+                            address: liquidity.currency0.address
+                        }
+                    })
+                    console.log(`liquidity-scanMonitorLiquidities   Update USD price: ${liquidity.currency0.symbol} ${1 / liquidity.rate}`);
+                }
             })
         })
     } catch (err) {
@@ -297,22 +384,22 @@ const updateSpecialLiquidity = async (pairContract, liquidityPairData) => {
 
         if (liquidityPairData.currency0.address == USDCToken.address) {
             const currency = await Currency.update({
-                price: 1 / liquidityPairData.rate
+                price: liquidityPairData.rate
             }, {
                 where: {
                     address: liquidityPairData.currency1.address
                 }
             })
-            console.log(`liquidity-updateSpecialLiquidity  Update USD price: ${liquidityPairData.currency1.symbol} ${1 / liquidityPairData.rate}`);
+            console.log(`liquidity-updateSpecialLiquidity  Update USD price: ${liquidityPairData.currency1.symbol} ${liquidityPairData.rate}`);
         } else if (liquidityPairData.currency1.address == USDCToken.address) {
             const currency = await Currency.update({
-                price: liquidityPairData.rate
+                price: 1 / liquidityPairData.rate
             }, {
                 where: {
                     address: liquidityPairData.currency0.address
                 }
             })
-            console.log(`liquidity-updateSpecialLiquidity  Update USD price: ${liquidityPairData.currency0.symbol} ${liquidityPairData.rate}`);
+            console.log(`liquidity-updateSpecialLiquidity  Update USD price: ${liquidityPairData.currency0.symbol} ${1 / liquidityPairData.rate}`);
         }
 
         return data;
@@ -409,6 +496,7 @@ const userLiquidity = async (req, res) => {
                 getProvider()
             )
             let balance = convertWeiToEth(await pairContract.balanceOf(address), 18);
+            let allowance = convertWeiToEth(await pairContract.allowance(address, YOCSwapRouter.address), 18);
             item.userLPAmount = balance;
             let currency0 = await Currency.findOne({
                 where: {
@@ -422,6 +510,7 @@ const userLiquidity = async (req, res) => {
             });
             liquidityData[i] = {
                 LPBalance: balance,
+                allowance,
                 item,
                 currency0,
                 currency1,
@@ -439,6 +528,7 @@ const userLiquidity = async (req, res) => {
 module.exports = {
     allLiquidities,
     addLiquidity,
+    importLiquidity,
     editLiquidity,
     deleteLiquidity,
     stateLiquidity,

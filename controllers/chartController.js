@@ -75,7 +75,7 @@ const storeTVLPerHour = async () => {
                 low: _.min(t_prices),
                 from: t_prices[0],
                 to: t_prices[t_prices.length - 1],
-                prices: t_prices.reduce((a, b) => a + b, 0) / t_prices.length,
+                price: t_prices.reduce((a, b) => a + b, 0) / t_prices.length,
 
                 fromDate: format('yyyy-MM-dd hh:mm:ss', fromDate),
                 toDate: format('yyyy-MM-dd hh:mm:ss', new Date()),

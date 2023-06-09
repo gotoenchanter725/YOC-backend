@@ -341,7 +341,7 @@ const updateSpecialStakePoolByUser = async (userAddress, item) => {
                 }
             })
         } else {
-            const pool = await StakePool.create({
+            const pool = await StakeDetail.create({
                 userAddress: userAddress,
                 stakeId: item.id,
                 amount: userAmount,
