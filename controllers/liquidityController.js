@@ -384,22 +384,22 @@ const updateSpecialLiquidity = async (pairContract, liquidityPairData) => {
 
         if (liquidityPairData.currency0.address == USDCToken.address) {
             const currency = await Currency.update({
-                price: liquidityPairData.rate
+                price: rate
             }, {
                 where: {
                     address: liquidityPairData.currency1.address
                 }
             })
-            console.log(`liquidity-updateSpecialLiquidity  Update USD price: ${liquidityPairData.currency1.symbol} ${liquidityPairData.rate}`);
+            console.log(`liquidity-updateSpecialLiquidity  Update USD price: ${liquidityPairData.currency1.symbol} ${rate}`);
         } else if (liquidityPairData.currency1.address == USDCToken.address) {
             const currency = await Currency.update({
-                price: 1 / liquidityPairData.rate
+                price: 1 / rate
             }, {
                 where: {
                     address: liquidityPairData.currency0.address
                 }
             })
-            console.log(`liquidity-updateSpecialLiquidity  Update USD price: ${liquidityPairData.currency0.symbol} ${1 / liquidityPairData.rate}`);
+            console.log(`liquidity-updateSpecialLiquidity  Update USD price: ${liquidityPairData.currency0.symbol} ${1 / rate}`);
         }
 
         return data;
@@ -458,7 +458,7 @@ const rateLiquidity = async (req, res) => {
     let rate = 0;
     for (let i = 0; i < all.length; i++) {
         const item = all[i];
-        console.log("liquidity-updateLiquidityDetailsByUser: ", item.currency0.address, item.currency1.address);
+        console.log("rateLiquidity: ", item.currency0.address, item.currency1.address);
         if (item.currency0.address == req.query.in && item.currency1.address == req.query.out) {
             rate = item.rate;
             break;
