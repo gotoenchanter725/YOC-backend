@@ -8,10 +8,21 @@ const { VotingDetail } = require('../models');
 // Create New Project
 router.post('/create', async (req, res) => {
     try {
-        const project = await Project.create(req.body);
-        return res.status(201).json({
-            project,
-        });
+        let current = await Project.findOne({
+            where: {
+                projectTitle: req.body.projectTitle
+            }
+        })
+        if (!current) {
+            const project = await Project.create(req.body);
+            return res.status(201).json({
+                project,
+            });
+        } else {
+            return res.status(204).json({
+                state: "The project is already existed"
+            });
+        }
     } catch (error) {
         return res.status(500).json({ error: error.message })
     }

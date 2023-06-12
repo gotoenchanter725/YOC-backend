@@ -196,6 +196,8 @@ const viewAllLiquidities = async (req, res) => {
 
 const scanMonitorLiquidities = async () => {
     try {
+        monitorSwapRouter();
+
         const liquidities = await Liquidity.findAll({
             // order: [['createdAt', 'ASC']]
             include: [
@@ -225,10 +227,6 @@ const scanMonitorLiquidities = async () => {
             );
             await updateSpecialLiquidity(pairContract, item);
 
-            await pairContract.on('Mint', async (sender, a0, a1, to) => {
-                let liquidity = await updateSpecialLiquidity(pairContract, item);
-                updateLiquidityDetailsByUser(to, item);
-            })
             await pairContract.on('Burn', async (sender, a0, a1, to) => {
                 let liquidity = await updateSpecialLiquidity(pairContract, item);
                 updateLiquidityDetailsByUser(to, item);
@@ -304,10 +302,6 @@ const scanMonitorLiquidities = async () => {
 
             await updateSpecialLiquidity(pairContract, item);
 
-            await pairContract.on('Mint', async (sender, a0, a1, to) => {
-                let liquidity = await updateSpecialLiquidity(pairContract, item);
-                updateLiquidityDetailsByUser(to, item);
-            })
             await pairContract.on('Burn', async (sender, a0, a1, to) => {
                 let liquidity = await updateSpecialLiquidity(pairContract, item);
                 updateLiquidityDetailsByUser(to, item);
@@ -338,6 +332,101 @@ const scanMonitorLiquidities = async () => {
     } catch (err) {
         console.log("liquidity-scanMonitorLiquidities", err);
     }
+}
+
+const monitorSwapRouter = async () => {
+    let swapFactoryContract = new Contract(
+        YOCSwapFactory.address,
+        YOCSwapFactory.abi,
+        getProvider()
+    )
+
+    let swapRouterContract = new Contract(
+        YOCSwapRouter.address,
+        YOCSwapRouter.abi,
+        getProvider()
+    )
+
+    swapRouterContract.on("AddLiquidity", async (addresses, amounts) => {
+        let token0 = addresses[0];
+        let token1 = addresses[1];
+        let pairAddress = addresses[2];
+        let user = addresses[3];
+
+        let amount0 = amounts[0];
+        let amount1 = amounts[1];
+        let lp = amounts[2];
+        console.log(`liquidity-monitorSwapRouter AddLiqutidy! ${token0} ${token1} ${pairAddress}`);
+        console.log('====== start 10s delay while create the pair in another thread ======');
+        await delay(10 * 1000);
+        let pairContract = new Contract(
+            pairAddress,
+            YOCPair.abi,
+            getProvider()
+        );
+
+        let data = await Liquidity.findOne({
+            where: {
+                pairAddress: pairAddress
+            },
+            // order: [['createdAt', 'ASC']]
+            include: [
+                {
+                    model: Currency,
+                    as: 'currency0'
+                },
+                {
+                    model: Currency,
+                    as: 'currency1'
+                }
+            ]
+        })
+        if (!data) {
+            console.log(`liquidity-monitorSwapRouter Detected New Pair! ${token0} ${token1}`)
+            const currency0 = (await Currency.findOne({
+                where: {
+                    address: token0
+                }
+            })).id;
+            const currency1 = (await Currency.findOne({
+                where: {
+                    address: token1
+                }
+            })).id;
+            console.log('liquidity-monitorSwapRouter  ', currency0, currency1);
+            let poolId = await swapFactoryContract.allPairs();
+            await Liquidity.create({
+                poolId: poolId - 1,
+                pairAddress: pairAddress,
+                pairDecimals: 18,
+                pairSymbol: "Yoc-LP",
+                isYoc: token0 == YOC.address || token1 == YOC.address,
+                token0: currency0,
+                token1: currency1,
+            });
+            data = await Liquidity.findOne({
+                include: [
+                    {
+                        model: Currency,
+                        as: 'currency0'
+                    },
+                    {
+                        model: Currency,
+                        as: 'currency1'
+                    }
+                ],
+                where: {
+                    poolId: poolId - 1
+                }
+            })
+        }
+
+        if (data) {
+            console.log('liquidity-monitorSwapRouter  Update Data');
+            await updateSpecialLiquidity(pairContract, data);
+            await updateLiquidityDetailsByUser(user, data);
+        }
+    })
 }
 
 const updateSpecialLiquidity = async (pairContract, liquidityPairData) => {
