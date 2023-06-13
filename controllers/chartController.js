@@ -1,6 +1,6 @@
 const { delay, convertWeiToEth, convertEthToWei, getProvider } = require('../untils');
 const { Contract, BigNumber, constants, utils, ethers } = require('ethers');
-const { Price, StakePool, TotalValueLockPrice, Currency } = require('../models');
+const { Price, FarmPool, StakePool, TotalValueLockPrice, Currency, Liquidity } = require('../models');
 const { ProjectManager, YOCSwapFactory, YOC, USDCToken, YOCSwapRouter, YOCPair, TokenTemplate, YOCPool, Project } = require("../config/contracts");
 const _ = require("lodash");
 var format = require('date-format');
@@ -111,32 +111,55 @@ const getTotalUSD = async () => {
             YOCSwapFactory.abi,
             getProvider()
         );
-        let poolLength = await swapFactoryContract.allPairsLength();
+        console.log("chart-getTotalUSD", "<=== start farms pool ===>");
+        const farmPoolsData = await FarmPool.findAll({
+            include: [
+                {
+                    model: Liquidity,
+                    as: 'liquidity',
+                    include: [
+                        {
+                            model: Currency,
+                            as: 'currency0'
+                        },
+                        {
+                            model: Currency,
+                            as: 'currency1'
+                        }
+                    ]
+                }
+            ],
+            where: {
+                isFinished: false,
+            },
+            order: [['createdAt', 'ASC']]
+        });
+        let poolLength = farmPoolsData.length;
         console.log("chart-getTotalUSD", "FarmsPools: ", + poolLength);
 
         let totalUSD = 0;
 
         for (let i = 0; i < poolLength; i++) {
-            let pairAddress = await swapFactoryContract.allPairs(i);
+            let pairAddress = farmPoolsData[i].liquidity.pairAddress;
             let pairContract = new Contract(
                 pairAddress,
                 YOCPair.abi,
                 getProvider()
             )
-            let token0Address = await pairContract.token0();
-            let token1Address = await pairContract.token1();
+            let token0Address = farmPoolsData[i].liquidity.currency0.address;
+            let token1Address = farmPoolsData[i].liquidity.currency1.address;
             let token0Contract = new Contract(
                 token0Address,
                 TokenTemplate.abi,
                 getProvider()
             )
-            let token0Decimal = await token0Contract.decimals();
+            let token0Decimal = farmPoolsData[i].liquidity.currency0.decimals;
             let token1Contract = new Contract(
                 token1Address,
                 TokenTemplate.abi,
                 getProvider()
             )
-            let token1Decimal = await token1Contract.decimals();
+            let token1Decimal = farmPoolsData[i].liquidity.currency1.decimals;
 
             let amount0 = convertWeiToEth(await token0Contract.balanceOf(pairAddress), token0Decimal);
             let amount1 = convertWeiToEth(await token1Contract.balanceOf(pairAddress), token1Decimal);
@@ -169,6 +192,7 @@ const getTotalUSD = async () => {
             console.log("Pair:", usdBalance);
             totalUSD += usdBalance;
         }
+        console.log("chart-getTotalUSD", "<=== end farms pool and start stakepools ===>");
 
         const poolsData = await StakePool.findAll({
             include: [
@@ -224,10 +248,12 @@ const getTotalUSD = async () => {
             console.log("chart-getTotalUSD", 'TOKEN: ', stakedTotalUSDRes);
             totalUSD += stakedTotalUSDRes;
         }
+        console.log("chart-getTotalUSD", "<=== end stakepools ===>");
 
         return totalUSD;
     } catch (err) {
         console.log("chart-getTotalUSD", err);
+        return 0;
     }
 }
 
@@ -270,6 +296,7 @@ const getTotalUSDOfFunds = async () => {
         return usdBalance;
     } catch (err) {
         console.log("chart-getTotalUSDOfFunds", err);
+        return 0;
     }
 }
 
