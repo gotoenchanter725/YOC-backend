@@ -585,7 +585,7 @@ const userLiquidity = async (req, res) => {
                 getProvider()
             )
             let balance = convertWeiToEth(await pairContract.balanceOf(address), 18);
-            let allowance = convertWeiToEth(await pairContract.allowance(address, YOCSwapRouter.address), 18);
+            // let allowance = convertWeiToEth(await pairContract.allowance(address, YOCSwapRouter.address), 18);
             item.userLPAmount = balance;
             let currency0 = await Currency.findOne({
                 where: {
@@ -599,7 +599,7 @@ const userLiquidity = async (req, res) => {
             });
             liquidityData[i] = {
                 LPBalance: balance,
-                allowance,
+                // allowance,
                 item,
                 currency0,
                 currency1,
