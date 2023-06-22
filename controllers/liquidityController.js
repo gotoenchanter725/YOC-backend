@@ -614,6 +614,111 @@ const userLiquidity = async (req, res) => {
     }
 }
 
+const getLiquidityPoolByTokens = async (req, res) => {
+    const { token0: currency0Address, token1: currency1Address } = req.query;
+    try {
+        if (token0 && token0) {
+            let liquidityPool = await Liquidity.findOne({
+                include: [
+                    {
+                        model: Currency,
+                        as: 'currency0',
+                        where: {
+                            address: [currency0Address, currency1Address]
+                        }
+                    },
+                    {
+                        model: Currency,
+                        as: 'currency1',
+                        where: {
+                            address: [currency0Address, currency1Address]
+                        }
+                    }
+                ],
+                where: {
+                    [Op.or]: [
+                        {
+                            '$currency0.address$': currency0Address,
+                            '$currency1.address$': currency1Address,
+                        },
+                        {
+                            '$currency0.address$': currency1Address,
+                            '$currency1.address$': currency0Address,
+                        }
+                    ]
+                }
+            })
+
+            if (liquidityPool) {
+                return res.status(200).json({ pool: liquidityPool });
+            } else {
+                return res.status(500).json({ error: 'there is not a pool.' });
+            }
+        } else {
+            return res.status(500).json({ error: 'need the token addresses' });
+        }
+    } catch (err) {
+        return res.status(500).json({ error: 'server error' });
+    }
+}
+
+const getSwapPriceImpactByTokens = async (req, res) => {
+    const { token0: currency0Address, token1: currency1Address, amountIn, amountOut } = req.query;
+    console.log(currency0Address, currency1Address, amountIn, amountOut);
+    try {
+        if (currency0Address && currency1Address) {
+            let liquidityPool = await Liquidity.findOne({
+                include: [
+                    {
+                        model: Currency,
+                        as: 'currency0',
+                        where: {
+                            address: [currency0Address, currency1Address]
+                        }
+                    },
+                    {
+                        model: Currency,
+                        as: 'currency1',
+                        where: {
+                            address: [currency0Address, currency1Address]
+                        }
+                    }
+                ],
+                where: {
+                    [Op.or]: [
+                        {
+                            '$currency0.address$': currency0Address,
+                            '$currency1.address$': currency1Address,
+                        },
+                        {
+                            '$currency0.address$': currency1Address,
+                            '$currency1.address$': currency0Address,
+                        }
+                    ]
+                }
+            })
+            if (liquidityPool) {
+                let amount0OfPool, amount1OfPool;
+                if (liquidityPool.currency0.address == currency0Address) {
+                    amount0OfPool = liquidityPool.amount0;
+                    amount1OfPool = liquidityPool.amount1;
+                } else {
+                    amount0OfPool = liquidityPool.amount1;
+                    amount1OfPool = liquidityPool.amount0;
+                }
+                let priceImpact = 1 - ((amount0OfPool / amount1OfPool) / ((amount0OfPool + amountIn) / (amount0OfPool - amountOut)));
+                return res.status(200).json({ priceImpact });
+            } else {
+                return res.status(500).json({ error: 'there is not a pool.' });
+            }
+        } else {
+            return res.status(500).json({ error: 'need the token addresses' });
+        }
+    } catch (err) {
+        return res.status(500).json({ error: 'server error' });
+    }
+}
+
 module.exports = {
     allLiquidities,
     addLiquidity,
@@ -622,6 +727,9 @@ module.exports = {
     deleteLiquidity,
     stateLiquidity,
 
+    getLiquidityPoolByTokens, 
+    getSwapPriceImpactByTokens, 
+    
     viewAllLiquidities,
     rateLiquidity,
     scanMonitorLiquidities,
