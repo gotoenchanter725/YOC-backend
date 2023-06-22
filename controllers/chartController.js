@@ -167,25 +167,33 @@ const getTotalUSD = async () => {
             let usdBalance = 0;
 
             if (token0Address != USDCToken.address) {
-                usdBalance += Number(convertWeiToEth((await swapRouterContract.getAmountsOut(
-                    convertEthToWei(amount0, token0Decimal),
-                    [
-                        token0Address,
-                        USDCToken.address
-                    ]
-                ))[1], USDCToken.decimals));
+                try {
+                    usdBalance += Number(convertWeiToEth((await swapRouterContract.getAmountsOut(
+                        convertEthToWei(amount0, token0Decimal),
+                        [
+                            token0Address,
+                            USDCToken.address
+                        ]
+                    ))[1], USDCToken.decimals));
+                } catch (err) {
+                    usdBalance = 0;
+                }
             } else {
                 usdBalance += Number(amount0)
             }
 
             if (token1Address != USDCToken.address) {
-                usdBalance += Number(convertWeiToEth((await swapRouterContract.getAmountsOut(
-                    convertEthToWei(amount1, token1Decimal),
-                    [
-                        token1Address,
-                        USDCToken.address
-                    ]
-                ))[1], USDCToken.decimals));
+                try {
+                    usdBalance += Number(convertWeiToEth((await swapRouterContract.getAmountsOut(
+                        convertEthToWei(amount1, token1Decimal),
+                        [
+                            token1Address,
+                            USDCToken.address
+                        ]
+                    ))[1], USDCToken.decimals));
+                } catch (err) {
+                    usdBalance == 0;
+                }
             } else {
                 usdBalance += Number(amount1)
             }
@@ -277,13 +285,17 @@ const getTotalUSDOfFunds = async () => {
                 const investTokenBalanceOfProject = convertWeiToEth(await investContract.balanceOf(projects[i]), investTokenDecimals);
                 console.log(investTokenAddress, USDCToken.address, investTokenBalanceOfProject)
                 if (investTokenAddress != USDCToken.address && investTokenBalanceOfProject) {
-                    usdBalance += Number(convertWeiToEth((await swapRouterContract.getAmountsOut(
-                        convertEthToWei(investTokenBalanceOfProject, investTokenDecimals),
-                        [
-                            investTokenAddress,
-                            USDCToken.address
-                        ]
-                    ))[1], USDCToken.decimals));
+                    try {
+                        usdBalance += Number(convertWeiToEth((await swapRouterContract.getAmountsOut(
+                            convertEthToWei(investTokenBalanceOfProject, investTokenDecimals),
+                            [
+                                investTokenAddress,
+                                USDCToken.address
+                            ]
+                        ))[1], USDCToken.decimals));
+                    } catch (err) {
+                        usdBalance += 0;
+                    }
                 } else {
                     usdBalance += Number(investTokenBalanceOfProject)
                 }
