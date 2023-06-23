@@ -21,7 +21,7 @@ const storeYocPricePerHour = async () => {
                 console.log("chart-storeYocPricePerHour", i + 1, +yPrice);
                 t_prices.push(+yPrice);
                 console.log("chart-storeYocPricePerHour", format('yyyy-MM-dd hh:mm:ss', new Date()));
-                await delay(1000 * 60 * 2);
+                await delay(1000 * 60);
             }
             toDate = new Date();
             console.log("chart-storeYocPricePerHour", "<===== Save Data ====>")
