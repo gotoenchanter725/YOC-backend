@@ -10,20 +10,17 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       farmId: {
-        allowNull: false,
         type: Sequelize.INTEGER,
       },
       liquidityId: {
-        allowNull: false,
         type: Sequelize.INTEGER,
       },
       userAddress: {
-        allowNull: false,
         type: Sequelize.STRING,
       },
       allowance: {
         allowNull: false,
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
       },
       amount: {
         allowNull: false,

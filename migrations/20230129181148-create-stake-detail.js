@@ -10,20 +10,17 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       stakeId: {
-        allowNull: false,
         type: Sequelize.INTEGER,
       },
       tokenId: {
-        allowNull: false,
         type: Sequelize.INTEGER,
       },
       userAddress: {
-        allowNull: false,
         type: Sequelize.STRING,
       },
       allowance: {
         allowNull: false,
-        type: Sequelize.INTEGER,
+        type: Sequelize.STRING,
       },
       amount: {
         allowNull: false,

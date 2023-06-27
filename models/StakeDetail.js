@@ -4,8 +4,14 @@ module.exports = (sequelize, DataTypes) => {
         stakeId: DataTypes.INTEGER,
         tokenId: DataTypes.INTEGER,
         userAddress: DataTypes.STRING,
-        allowance: DataTypes.INTEGER,
-        amount: DataTypes.STRING,
+        allowance: {
+            type: DataTypes.STRING,
+            defaultValue: "0"
+        },
+        amount: {
+            type: DataTypes.STRING,
+            defaultValue: "0"
+        },
 
         createdAt: {
             allowNull: false,
