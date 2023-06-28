@@ -10,11 +10,9 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       liquidityId: {
-        allowNull: false,
         type: Sequelize.INTEGER,
       },
       userAddress: {
-        allowNull: false,
         type: Sequelize.STRING,
       },
       allowance: {

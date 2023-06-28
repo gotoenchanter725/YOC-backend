@@ -3,8 +3,14 @@ module.exports = (sequelize, DataTypes) => {
     const LiquidityDetailModel = sequelize.define('LiquidityDetail', {
         liquidityId: DataTypes.INTEGER,
         userAddress: DataTypes.STRING, 
-        allowance: DataTypes.INTEGER,
-        amount: DataTypes.STRING, 
+        allowance: {
+            type: DataTypes.STRING,
+            defaultValue: "0"
+        },
+        amount: {
+            type: DataTypes.STRING,
+            defaultValue: "0"
+        },
         isActive: {
           type: DataTypes.BOOLEAN,
           defaultValue: true
