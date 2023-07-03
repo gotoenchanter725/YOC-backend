@@ -700,17 +700,16 @@ const getSwapPriceImpactByTokens = async (req, res) => {
             if (liquidityPool) {
                 let amount0OfPool, amount1OfPool;
                 if (liquidityPool.currency0.address == currency0Address) {
-                    amount0OfPool = liquidityPool.amount0;
-                    amount1OfPool = liquidityPool.amount1;
+                    amount0OfPool = Number(liquidityPool.amount0);
+                    amount1OfPool = Number(liquidityPool.amount1);
                 } else {
-                    amount0OfPool = liquidityPool.amount1;
-                    amount1OfPool = liquidityPool.amount0;
+                    amount0OfPool = Number(liquidityPool.amount1);
+                    amount1OfPool = Number(liquidityPool.amount0);
                 }
                 let oldPrice = amount0OfPool / amount1OfPool;
-                console.log(amount0OfPool, amount1OfPool);
-                let newPrice = (Number(amount0OfPool) + Number(amountIn)) / (Number(amount1OfPool) - Number(amountOut));
+                let newPrice = Number(amountIn) / Number(amountOut);
                 console.log(oldPrice, newPrice);
-                let priceImpact = (newPrice - oldPrice) / oldPrice;
+                let priceImpact = newPrice / oldPrice - 1;
                 return res.status(200).json({ priceImpact });
             } else {
                 return res.status(500).json({ error: 'there is not a pool.' });
