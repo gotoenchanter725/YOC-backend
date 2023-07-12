@@ -24,6 +24,9 @@ module.exports = {
       totalShare: {
         type: Sequelize.STRING
       },
+      totalAmount: {
+        type: Sequelize.STRING
+      },
       accYocPerShare: {
         type: Sequelize.STRING
       },

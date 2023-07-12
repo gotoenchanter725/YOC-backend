@@ -295,12 +295,29 @@ const updateSpecialStakePool = async (item) => {
             getProvider()
         )
         let totalShare = convertWeiToEth(await stakeContract.totalShares(), item.currency.decimals);
+        let totalAmount = 0;
+        if (item.currency.address == YOC.address) {
+            const YOCContract = new Contract(
+                YOC.address, 
+                YOC.abi,
+                getProvider()
+            )
+            totalAmount = convertWeiToEth(await YOCContract.balanceOf(stakeContract.address), YOC.decimals);
+        } else {
+            const tokenContract = new Contract(
+                item.currency.address, 
+                TokenTemplate.abi,
+                getProvider()
+            )
+            totalAmount = convertWeiToEth(await tokenContract.balanceOf(stakeContract.address), item.currency.decimals);
+        }
         let accYocPerShare = 0;
         if (item.currency.address != YOC.address) {
             accYocPerShare = convertWeiToEth(await stakeContract.accYocPerShare(), 18);
         }
         await StakePool.update({
             totalShare: totalShare,
+            totalAmount: totalAmount,
             accYocPerShare: accYocPerShare
         }, {
             where: {

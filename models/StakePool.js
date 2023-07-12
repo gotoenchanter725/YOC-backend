@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
         token: DataTypes.INTEGER,
         allocPoint: DataTypes.INTEGER,
         totalShare: DataTypes.STRING,
+        totalAmount: DataTypes.STRING,
         accYocPerShare: DataTypes.STRING,
 
         isActive: {
