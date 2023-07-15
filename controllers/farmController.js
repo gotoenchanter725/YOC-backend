@@ -45,11 +45,18 @@ const addFarm = async (req, res) => {
             if (!req.body.allocPoint || !req.body.pairAddress) throw "invalid parameter";
             const YocFarmContract = new ethers.Contract(YOCFarm.address, YOCFarm.abi, signer);
             console.log("farm-addFarm", allocPoint, pairAddress, isYoc);
+            
+            const gasPrice = await getProvider().getGasPrice();
+            console.log("gasPrice", gasPrice.toString());
             await YocFarmContract.add(
                 allocPoint,
                 pairAddress,
                 isYoc,
-                false
+                false, 
+                {
+                    gasLimit: 2000000, 
+                    gasPrice: gasPrice
+                }
             )
             return res.status(200).json({
                 success: "Pool Create"
