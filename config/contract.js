@@ -6,21 +6,21 @@ const ETH_NETWORK = {
     testnet: {
         // RPC_URL: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
         // CHAIN_ID: 5
-        RPC_URL: "https://rpc.sepolia.org",
+        RPC_URL: "https://sepolia.infura.io/v3/48b7b4cf9a7b4b5ca79c2413f2f0de2e",
         CHAIN_ID: 11155111
     }
 }
 
 const ETH_CONTRACT_ADDRESS = {
     AdminWalletAddress: "0x5141383723037FBd3818dAEcb7d4C5DF1Dc8c6B1",
-    ProjectManagerAddress: "0xCA384783C401adD31Fdc9E9C1510FC051A87deb8",
-    ProjectDetailAddress: "0xa89F7C7FE1E9396Ea928234B347F05e9daFeF2F3",
+    ProjectManagerAddress: "0xBbBA0F891c3E8Fee4ff55E63501ceA2F10A3F804",
+    ProjectDetailAddress: "0x15e90295FB04Ff94db4e225910f6F6b0FcDbfe4C",
     WETH: "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
-    YOCAddress: "0xb7F6D0175Dd92e2C7f9386E7698a1ab0B0a504cA",
-    USDCAddress: "0xfF70cCf26dDbcC7F09D9C0642F6bCac34678f3CA",
-    YOCSwapFactoryAddress: "0xfF6D3352c1ba773cAdbE769018AB321C92376D6C",
-    YOCSwapRouterAddress: "0x8690552a54975c37Ed77eE72055C3A5fa9d8E06A",
-    YOCFarmAddress: "0x7f331f7B7D47802e0FBbfe14ddcFD12646fC7030",
+    YOCAddress: "0x0D83e4481AB606ff91AbBB1b8eE17E4b0516dEC5",
+    USDCAddress: "0xf70Ba5e0918a160523b335F0Fe089a1708630698",
+    YOCSwapFactoryAddress: "0x5Adf8346E72F00eb61dD4DfA1d3f2692188A414e",
+    YOCSwapRouterAddress: "0x8B6C3AB9207f3ea9824E4D952a381Ca00D49080D",
+    YOCFarmAddress: "0x010C4bB37841BEe837abA90960f56BDB2ecCc6db",
 }
 
 const BNB_NETWORK = {
