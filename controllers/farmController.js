@@ -45,16 +45,16 @@ const addFarm = async (req, res) => {
             if (!req.body.allocPoint || !req.body.pairAddress) throw "invalid parameter";
             const YocFarmContract = new ethers.Contract(YOCFarm.address, YOCFarm.abi, signer);
             console.log("farm-addFarm", allocPoint, pairAddress, isYoc);
-            
+
             const gasPrice = await getProvider().getGasPrice();
             console.log("gasPrice", gasPrice.toString());
             await YocFarmContract.add(
                 allocPoint,
                 pairAddress,
                 isYoc,
-                false, 
+                false,
                 {
-                    gasLimit: 2000000, 
+                    gasLimit: 2000000,
                     gasPrice: gasPrice
                 }
             )
@@ -257,43 +257,88 @@ const updateSpecialFarm = async (poolInfo, pId) => {
 
 const updateFarmDetailsByUser = async (userAddress, pId) => {
     try {
-        try {
-            let YOCFarmContract = new Contract(
-                YOCFarm.address,
-                YOCFarm.abi,
-                getProvider()
-            )
+        let YOCFarmContract = new Contract(
+            YOCFarm.address,
+            YOCFarm.abi,
+            getProvider()
+        )
 
-            let userInfo = await YOCFarmContract.userInfo(pId, userAddress);
-            let userAmount = convertWeiToEth(userInfo.amount, 18);
+        let userInfo = await YOCFarmContract.userInfo(pId, userAddress);
+        let userAmount = convertWeiToEth(userInfo.amount, 18);
 
-            let data = await FarmPool.findOne({
+        let farmPoolByUser = await FarmPool.findOne({
+            where: {
+                poolId: pId
+            }
+        })
+        let state = 0;
+        console.log("farm-updateFarmDetailsByUser 1");
+        if (farmPoolByUser) {
+            const pair = await FarmPool.findOne({
+                include: [
+                    {
+                        model: Liquidity,
+                        as: 'liquidity',
+                        include: [
+                            {
+                                model: Currency,
+                                as: 'currency0'
+                            },
+                            {
+                                model: Currency,
+                                as: 'currency1'
+                            }
+                        ]
+                    }
+                ],
                 where: {
                     poolId: pId
                 }
             })
-            let state = 0;
-            if (data) {
-                state = await FarmDetail.update({
-                    isActive: true,
+            const pairContract = new Contract(
+                pair.liquidity.pairAddress + '',
+                YOCPair.abi,
+                getProvider()
+            )
+            let allowance = convertWeiToEth(await pairContract.allowance(userAddress, YOCFarm.address), 18);
+            console.log("farm-updateFarmDetailsByUser allownace", allowance);
+
+            let userDataByfarm = await FarmDetail.findOne({
+                where: {
+                    farmId: pair.id,
+                    userAddress: userAddress
+                }
+            })
+
+            if (userDataByfarm) {
+                await FarmDetail.update({
                     amount: userAmount,
-                    liquidityId: data.liquidityId
+                    allowance: allowance,
                 }, {
                     where: {
                         userAddress: userAddress,
-                        farmId: data.id,
+                        farmId: farmPoolByUser.id,
                     }
                 })
+                console.log("farm-updateFarmDetailsByUser update");
             } else {
-                state = false;
+                await FarmDetail.create({
+                    isActive: true,
+                    amount: userAmount,
+                    liquidityId: farmPoolByUser.liquidityId,
+                    userAddress: userAddress,
+                    farmId: farmPoolByUser.id,
+                    allowance: allowance,
+                })
+                console.log("farm-updateFarmDetailsByUser create");
             }
-            return state;
-        } catch (e) {
-            console.log("farm-updateFarmDetailsByUser", e);
-            return false;
+        } else {
+            state = false;
         }
-    } catch (err) {
-        console.log("farm-updateFarmDetailsByUser", err)
+        return state;
+    } catch (e) {
+        console.log("farm-updateFarmDetailsByUser", e);
+        return false;
     }
 }
 
@@ -367,5 +412,6 @@ module.exports = {
     viewAllFarms,
     scanMonitorFarms,
     userFarmDetail,
-    userFarmDetailUpdateAllowance
+    userFarmDetailUpdateAllowance,
+    updateFarmDetailsByUser
 }
