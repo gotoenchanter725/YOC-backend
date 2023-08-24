@@ -38,7 +38,7 @@ const addStake = async (req, res) => {
                 }
             })
             const signer = new ethers.Wallet(PRIVATE_KEY, getProvider());
-            
+
             const gasPrice = await getProvider().getGasPrice();
             console.log("gasPrice", gasPrice.toString());
 
@@ -73,10 +73,10 @@ const addStake = async (req, res) => {
                 }
             )
             console.log('stake-addstake', 'create empty pool and save temp');
-            let YOCPoolFactory, YOCPoolContract;
+            let PoolContract;
             if (currency.address == YOC.address) {
-                YOCPoolFactory = new ethers.ContractFactory(YOCPool.abi, YOCPool.bytecode, signer);
-                YOCPoolContract = await YOCPoolFactory.deploy(
+                let YOCPoolFactory = new ethers.ContractFactory(YOCPool.abi, YOCPool.bytecode, signer);
+                let YOCPoolContract = await YOCPoolFactory.deploy(
                     YOC.address,
                     YOCFarm.address,
                     signer.address,
@@ -88,9 +88,11 @@ const addStake = async (req, res) => {
                         gasPrice: gasPrice
                     }
                 )
+                console.log('stake-addstake', 'YOCPoolContract created');
+                PoolContract = YOCPoolContract;
             } else {
-                YOCPoolFactory = new ethers.ContractFactory(TOKENPool.abi, TOKENPool.bytecode, signer);
-                YOCPoolContract = await YOCPoolFactory.deploy(
+                let TOKENPoolFactory = new ethers.ContractFactory(TOKENPool.abi, TOKENPool.bytecode, signer);
+                let TOKENPoolContract = await TOKENPoolFactory.deploy(
                     currency.address,
                     YOC.address,
                     YOCFarm.address,
@@ -101,11 +103,13 @@ const addStake = async (req, res) => {
                         gasPrice: gasPrice
                     }
                 )
+                console.log('stake-addstake', 'TOKENPoolContract created');
+                PoolContract = TOKENPoolContract;
             }
-            await YOCPoolContract.deployed();
-            console.log('stake-addstake', "YOCStakingPool Address: ", YOCPoolContract.address);
+            await PoolContract.deployed();
+            console.log('stake-addstake', "YOCStakingPool Address: ", PoolContract.address);
             const tx = await dummyContract.approve(
-                YOCPoolContract.address,
+                PoolContract.address,
                 MaxUint256,
                 {
                     gasLimit: 2000000,
@@ -113,19 +117,19 @@ const addStake = async (req, res) => {
                 }
             );
             await tx.wait();
-            console.log('stake-addstake', "YOCStakingPool Approve");
-            await YOCPoolContract.init(
+            console.log('stake-addstake', "StakingPool Approve");
+            await PoolContract.init(
                 dummyContract.address,
                 {
                     gasLimit: 2000000,
                     gasPrice: gasPrice
                 }
             )
-            console.log('stake-addstake', "YocStakingPool init\n");
+            console.log('stake-addstake', "StakingPool init\n");
 
 
             await StakePool.update({
-                address: YOCPoolContract.address,
+                address: PoolContract.address,
                 poolId: pId
             }, {
                 where: {
@@ -146,7 +150,7 @@ const addStake = async (req, res) => {
             })
 
             const stakeContract = new Contract(
-                YOCPoolContract.address,
+                PoolContract.address,
                 currency.address == YOC.address ? YOCPool.abi : YOCPool.TokenABI,
                 getProvider()
             );
