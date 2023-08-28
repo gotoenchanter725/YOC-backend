@@ -40,13 +40,15 @@ const addStake = async (req, res) => {
             const signer = new ethers.Wallet(PRIVATE_KEY, getProvider());
 
             const gasPrice = await getProvider().getGasPrice();
-            console.log("gasPrice", gasPrice.toString());
+            console.log("stake-addstake gasPrice", gasPrice.toString());
 
             const dummyFactory = new ethers.ContractFactory(TokenABI.abi, TokenABI.bytecode, signer)
+            console.log("stake-addstake", "start to deploy dummpytoken")
             const dummyContract = await dummyFactory.deploy("Dummy Token for YOC Stake", "YDFD", {
-                gasLimit: 700000,
+                gasLimit: 2000000,
                 gasPrice
             });
+            console.log("stake-addstake", "start to deploy process dummpytoken")
             await dummyContract.deployed();
             console.log('stake-addstake', 'YOC Dummy Address: ', dummyContract.address);
             const YocFarmContract = new ethers.Contract(YOCFarm.address, YOCFarm.abi, signer);
