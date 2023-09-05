@@ -298,7 +298,8 @@ const scanMonitorStakes = async () => {
                 }
             })
 
-            await stakeContract.on('Deposit', async (userAddress, amount) => {
+            console.log("stake-scanMonitorStakes", item.currency.symbol, item.address)
+            await stakeContract.on('Deposit', { fromBlock: 32892231 }, async (userAddress, amount) => {
                 console.log('stake-scanMonitorStakes', "<======== Stake-Deposit ========>");
                 updateSpecialStakePool(item);
                 updateSpecialStakePoolByUser(userAddress, item);
