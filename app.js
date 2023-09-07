@@ -18,7 +18,7 @@ const adminLiqudityRouter = require('./routes/admin/liquidityRouter');
 const adminFarmRouter = require('./routes/admin/farmRouter');
 const adminStakeRouter = require('./routes/admin/stakeRouter');
 
-const { storeYocPricePerHour, storeTVLPerHour } = require("./controllers/chartController");
+const { storeYocPricePerHour, storeTVLPerHour, monitorYUSD } = require("./controllers/chartController");
 const { scanMonitorLiquidities } = require("./controllers/liquidityController");
 const { scanMonitorFarms } = require("./controllers/farmController");
 const { scanMonitorStakes } = require("./controllers/stakeController");
@@ -59,4 +59,5 @@ app.listen(PORT, () => {
     scanMonitorLiquidities();
     scanMonitorFarms();
     scanMonitorStakes();
+    monitorYUSD();
 });

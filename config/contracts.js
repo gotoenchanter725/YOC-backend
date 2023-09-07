@@ -5,6 +5,7 @@ const TokenTemplateABI = require("../contracts/TokenTemplate.sol/TokenTemplate.j
 const TokenABI = require("../contracts/Token.sol/TOKEN.json");
 const USDCTokenABI = require("../contracts/USDC.sol/USDC.json");
 const YOCABI = require("../contracts/YOC.sol/YOC.json");
+const YUSDABI = require("../contracts/YUSD.sol/YUSD.json");
 const YOCSwapRouterAPI = require("../contracts/YocswapRouter.sol/YocswapRouter.json");
 const YOCSwapFactoryABI = require("../contracts/YocswapFactory.sol/YocswapFactory.json");
 const YOCPairABI = require("../contracts/YocswapFactory.sol/YocswapPair.json");
@@ -40,6 +41,14 @@ const YOC = {
     symbol: "YOC",
     name: "YOC-FoundersCoin",
     ...YOCABI
+}
+
+const YUSD = {
+    address: CONTRACT_ADDRESS.YUSDAddress + "",
+    decimals: 6,
+    symbol: "YUSD",
+    name: "YUSD",
+    ...YUSDABI
 }
 
 const USDCToken = {
@@ -89,6 +98,7 @@ module.exports = {
     WETH,
     USDCToken,
     YOC,
+    YUSD,
     YOCSwapRouter,
     YOCSwapFactory,
     YOCFarm,

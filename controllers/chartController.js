@@ -1,9 +1,10 @@
 const { delay, convertWeiToEth, convertEthToWei, getProvider } = require('../untils');
 const { Contract, BigNumber, constants, utils, ethers } = require('ethers');
 const { Price, FarmPool, StakePool, TotalValueLockPrice, Currency, Liquidity } = require('../models');
-const { ProjectManager, YOCSwapFactory, YOC, USDCToken, YOCSwapRouter, YOCPair, TokenTemplate, YOCPool, Project } = require("../config/contracts");
+const { ProjectManager, YOCSwapFactory, YOC, YUSD, USDCToken, YOCSwapRouter, YOCPair, TokenTemplate, YOCPool, Project } = require("../config/contracts");
 const _ = require("lodash");
 var format = require('date-format');
+const { PRIVATE_KEY } = require('../config/contract');
 
 const storeYocPricePerHour = async () => {
     try {
@@ -312,7 +313,44 @@ const getTotalUSDOfFunds = async () => {
     }
 }
 
+const monitorYUSD = async () => {
+    try {
+        const signer = new ethers.Wallet(PRIVATE_KEY, getProvider());
+        let YUSDContract = new Contract(
+            YUSD.address,
+            YUSD.abi,
+            signer
+        );
+        YUSDContract.on("SetAutoFunction1Action", (state) => {
+            console.log("YUSD: Changed AutoFunction1Action:", state);
+        })
+        while (true) {
+            try {
+                console.log("YUSD:")
+                let auto = await YUSDContract.autoFunction1Action();
+                console.log("YUSD: auto", auto);
+                if (auto) {
+                    let price = convertWeiToEth(await YUSDContract.price(), YUSD.decimals);
+                    console.log("YUSD: price", price);
+                    if (price > 2) {
+                        console.log("YUSD: function1");
+                        // await YUSDContract.function1({
+                        //     gasLimit: 98182
+                        // });
+                    }
+                }
+                await delay(10 * 1000);
+            } catch (err) {
+                console.log("YUSD: in while", err)
+            }
+        }
+    } catch (error) {
+        console.log("YUSD:", error);
+    }
+}
+
 module.exports = {
     storeYocPricePerHour,
-    storeTVLPerHour
+    storeTVLPerHour,
+    monitorYUSD
 }
