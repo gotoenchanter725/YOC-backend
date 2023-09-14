@@ -1,13 +1,13 @@
 const ETH_NETWORK = {
     mainnet: {
-        RPC_URL: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        // RPC_URL: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        RPC_URL: "https://rpc.ankr.com/eth",
         CHAIN_ID: 1
     },
     testnet: {
-        // RPC_URL: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
-        // CHAIN_ID: 5
         // RPC_URL: "https://rpc.sepolia.org",
         // RPC_URL: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
+        // RPC_URL: "https://sepolia.infura.io/v3/f00540d3d0c846d093e61d939dd3be59",
         RPC_URL: "https://rpc.ankr.com/eth_sepolia",
         CHAIN_ID: 11155111
     }
@@ -28,7 +28,8 @@ const ETH_CONTRACT_ADDRESS = {
 
 const BNB_NETWORK = {
     mainnet: {
-        RPC_URL: "https://bsc-dataseed1.binance.org/",
+        // RPC_URL: "https://bsc-dataseed1.binance.org/",
+        RPC_URL: "https://rpc.ankr.com/bsc/",
         CHAIN_ID: 56
     },
     testnet: {

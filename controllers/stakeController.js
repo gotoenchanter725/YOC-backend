@@ -64,7 +64,7 @@ const addStake = async (req, res) => {
             const pId = +await YocFarmContract.poolLength();
             console.log('stake-addstake', 'poolId: ', pId);
 
-            await YocFarmContract.add(
+            const txAdd = await YocFarmContract.add(
                 req.body.allocPoint,
                 dummyContract.address,
                 false,
@@ -74,6 +74,7 @@ const addStake = async (req, res) => {
                     gasPrice: gasPrice
                 }
             )
+            await txAdd.wait();
             console.log('stake-addstake', 'create empty pool and save temp');
             let PoolContract;
             if (currency.address == YOC.address) {
@@ -110,7 +111,7 @@ const addStake = async (req, res) => {
             }
             await PoolContract.deployed();
             console.log('stake-addstake', "YOCStakingPool Address: ", PoolContract.address);
-            const tx = await dummyContract.approve(
+            const txDummyContract = await dummyContract.approve(
                 PoolContract.address,
                 MaxUint256,
                 {
@@ -118,7 +119,7 @@ const addStake = async (req, res) => {
                     gasPrice: gasPrice
                 }
             );
-            await tx.wait();
+            await txDummyContract.wait();
             console.log('stake-addstake', "StakingPool Approve");
             await PoolContract.init(
                 dummyContract.address,
