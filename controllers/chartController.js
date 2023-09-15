@@ -334,9 +334,9 @@ const monitorYUSD = async () => {
                     console.log("YUSD: price", price);
                     if (price > 2) {
                         console.log("YUSD: function1");
-                        // await YUSDContract.function1({
-                        //     gasLimit: 98182
-                        // });
+                        await YUSDContract.function1({
+                            gasLimit: 110000
+                        });
                     }
                 }
                 await delay(10 * 1000);
