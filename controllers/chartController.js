@@ -16,13 +16,13 @@ const storeYocPricePerHour = async () => {
 
         while (true) {
             let t_prices = [], fromDate = new Date();
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 3; i++) {
                 let res = await swapContract.getExpectLiquidityAmount(YOC.address, USDCToken.address, convertEthToWei('1', YOC.decimals));
                 let yPrice = convertWeiToEth(res, USDCToken.decimals);
                 console.log("chart-storeYocPricePerHour", i + 1, +yPrice);
                 t_prices.push(+yPrice);
                 console.log("chart-storeYocPricePerHour", format('yyyy-MM-dd hh:mm:ss', new Date()));
-                await delay(1000 * 60);
+                await delay(1000 * 60 * 18); // 18mins * 3
             }
             toDate = new Date();
             console.log("chart-storeYocPricePerHour", "<===== Save Data ====>")
@@ -58,7 +58,7 @@ const storeTVLPerHour = async () => {
     try {
         while (true) {
             let t_prices = [], fromDate = new Date();
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 2; i++) {
                 let tPrice = 0;
                 tPrice += await getTotalUSD();
                 tPrice += await getTotalUSDOfFunds();
@@ -67,7 +67,7 @@ const storeTVLPerHour = async () => {
                 t_prices.push(+tPrice);
                 console.log("chart-storeTVLPerHour", format('yyyy-MM-dd hh:mm:ss', new Date()));
                 console.log("delay per one loop")
-                await delay(1000 * 60 * 2);
+                await delay(1000 * 60 * 28); // 28 mins * 2
             }
             toDate = new Date();
             console.log("chart-storeTVLPerHour", "<===== Save Data ====>")
@@ -339,7 +339,7 @@ const monitorYUSD = async () => {
                         });
                     }
                 }
-                await delay(10 * 1000);
+                await delay(1000 * 60 * 10); // 10mins
             } catch (err) {
                 console.log("YUSD: in while", err)
             }
