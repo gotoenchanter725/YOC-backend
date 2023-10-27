@@ -27,10 +27,15 @@ const getProvider = function () {
     return provider;
 }
 
+const nuanceToPercentage = (first, second) => {
+    return (second - first) / first * 100;
+}
+
 module.exports = {
     delay, 
     convertEthToWei, 
     convertWeiToEth, 
     getRPCURL, 
-    getProvider
+    getProvider,
+    nuanceToPercentage
 }

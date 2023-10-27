@@ -1,9 +1,36 @@
 module.exports = (sequelize, DataTypes) => {
   const ProjectModel = sequelize.define('Project', {
-    projectTitle: DataTypes.STRING,
+    projectTitle: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      primaryKey: true
+    },
     iconUrl: DataTypes.STRING,
+    address: DataTypes.STRING,
+    ptokenAddress: {
+      type: DataTypes.STRING,
+      allowNull: false, 
+      unique: true
+    },
+    ptokenDecimals: DataTypes.INTEGER,
+    ptokenSymbol: DataTypes.STRING,
+    ptokenTotalSupply: DataTypes.STRING,
+    ptokenSellAmount: DataTypes.STRING,
+    ptokenPoolAmount: DataTypes.STRING,
+    YUSDTradePoolAmount: {
+      type: DataTypes.STRING,
+      defaultValue: "0"
+    },
+    ptokenPrice: DataTypes.STRING,
+    ptokenTradeBalance: {
+      type: DataTypes.STRING,
+      defaultValue: "0"
+    },
     endDate: DataTypes.DATE,
-    isDeleted: DataTypes.BOOLEAN, 
+    isDeleted: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
     createdAt: {
       allowNull: false,
       type: DataTypes.DATE
@@ -13,7 +40,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE
     }
   }, {
-    tableName: 'projects', 
+    tableName: 'projects',
   });
 
   ProjectModel.associate = function (models) {
@@ -21,6 +48,7 @@ module.exports = (sequelize, DataTypes) => {
     ProjectModel.hasMany(models.VotingQuery, {
       foreignKey: 'projectTitle'
     })
+    ProjectModel.hasOne(models.TradeOrder, { foreignKey: 'ptokenAddress' });
   };
 
   return ProjectModel;

@@ -12,6 +12,7 @@ const YOCPairABI = require("../contracts/YocswapFactory.sol/YocswapPair.json");
 const YOCFarmABI = require("../contracts/YocFarming.sol/YOCMasterChef.json");
 const YOCStakingABI = require("../contracts/YocStaking.sol/YocStaking.json");
 const TokenStakingABI = require("../contracts/TokenStaking.sol/TokenStaking.json");
+const ProjectTradeABI = require("../contracts/ProjectTrade.sol/ProjectTrade.json");
 
 const { CONTRACT_ADDRESS } = require('../config/contract');
 
@@ -87,6 +88,11 @@ const TOKENPool = {
     ...TokenStakingABI
 }
 
+const ProjectTrade = {
+    address: CONTRACT_ADDRESS.ProjectTradeAddress + "",
+    ...ProjectTradeABI
+}
+
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
 module.exports = {
@@ -103,8 +109,9 @@ module.exports = {
     YOCSwapFactory,
     YOCFarm,
     YOCPool,
-    TOKENPool, 
+    TOKENPool,
     YOCPair,
-    PRIVATE_KEY, 
-    TokenABI
+    PRIVATE_KEY,
+    TokenABI,
+    ProjectTrade,
 }
