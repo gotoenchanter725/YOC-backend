@@ -35,7 +35,7 @@ const { monitorProjectTrade } = require("./controllers/tradeController");
 const { scanMonitorProjects } = require("./controllers/projectController");
 
 var corsOptions = {
-    origin: "http://localhost:3000"
+    origin: "*"
 };
 
 app.use(cors(corsOptions));
@@ -66,12 +66,12 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}.`);
 
-    storeYocPricePerHour();
-    storeTVLPerHour();
-    scanMonitorLiquidities();
-    scanMonitorFarms();
-    scanMonitorStakes();
-    monitorYUSD();
+    // storeYocPricePerHour();
+    // storeTVLPerHour();
+    // scanMonitorLiquidities();
+    // scanMonitorFarms();
+    // scanMonitorStakes();
+    // monitorYUSD();
     monitorProjectTrade();
     scanMonitorProjects();
 });

@@ -24,6 +24,7 @@ router.get('/projectTitle/:projectTitle', async (req, res) => {
             },
             order: [['endDate', 'ASC']]
         });
+        console.log('here', votingQueryDetail);
         return res.status(200).json({ votingQueryDetail });
     } catch (error) {
         return res.status(500).send(error.message);
@@ -51,7 +52,6 @@ router.get('/projectTitle/:projectTitle/accountAddress/:userAddress', async (req
                 }
             ]
         });
-
         return res.status(200).json({ userVotingStatus: validVotingQuery });
     } catch (error) {
         return res.status(500).send(error.message);

@@ -1,7 +1,7 @@
-const { Project } = require('../models/Project');
+const { Project } = require('../models');
 const { TokenTemplate, Project: projectAbi, ProjectManager, ProjectTrade, PRIVATE_KEY } = require("../config/contracts");
 const { getProvider, delay, convertWeiToEth, convertEthToWei } = require('../untils');
-const { Contract } = require('ethers');
+const { Contract, ethers } = require('ethers');
 
 
 // Create New Project
@@ -19,7 +19,7 @@ const create = async (req, res) => {
                 iconUrl: data.iconUrl,
                 address: data.address,
                 ptokenAddress: data.ptokenAddress,
-                ptokenDecimals: data.decimals, 
+                ptokenDecimals: data.decimals,
                 ptokenTotalSupply: data.totalSupuply,
                 ptokenSymbol: data.projectTitle,
                 ptokenSellAmount: data.sellAmount,
@@ -28,7 +28,7 @@ const create = async (req, res) => {
             });
             monitorProject(project);
 
-            
+
             const signer = new ethers.Wallet(PRIVATE_KEY, getProvider());
             let ProjectTradeContract = new Contract(
                 ProjectTrade.address,
@@ -52,58 +52,66 @@ const create = async (req, res) => {
 };
 
 const scanMonitorProjects = async () => {
-    const projects = await Project.findAll({});
-    const projectManagerContract = new Contract(
-        ProjectManager.address,
-        ProjectManager.abi,
-        getProvider()
-    )
-    console.log(`<== scanMonitorProjects and monitor project manager ==>`)
-    projects.forEach(pItem => {
-        monitorProject(pItem);
-    });
-    projectManagerContract.on('DeployedNewProject', (userAddress, contractAddress, ptokenAddress) => {
-        console.log(`<== scanMonitorProjects: DeployedNewProject (${userAddress}, ${contractAddress}, ${ptokenAddress}) ==>`);
-    })
+    try {
+        const projects = await Project.findAll({});
+        const projectManagerContract = new Contract(
+            ProjectManager.address,
+            ProjectManager.abi,
+            getProvider()
+        )
+        console.log(`<== scanMonitorProjects and monitor project manager ==>`)
+        projects.forEach(pItem => {
+            monitorProject(pItem);
+        });
+        projectManagerContract.on('DeployedNewProject', (userAddress, contractAddress, ptokenAddress) => {
+            console.log(`<== scanMonitorProjects: DeployedNewProject (${userAddress}, ${contractAddress}, ${ptokenAddress}) ==>`);
+        })
+    } catch (err) {
+        console.log('<== scanMonitorProjects: Error ==>', err.message);
+    }
 }
 
 const monitorProject = (projectInfo) => {
-    const projectContract = new Contract(
-        projectInfo.address, 
-        projectAbi.abi,
-        getProvider()
-    );
-    const ptokenContract = new Contract(
-        projectInfo.ptokenAddress,
-        TokenTemplate.abi,
-        getProvider()
-    )
-    projectContract.on('participate', async (_pToken, _YUSDAmount, _pTokenAmount) => {
-        console.log(`<== monitorProject: participate (${_pToken}, ${_YUSDAmount}, ${_pTokenAmount}) ==>`);
-        var currentPollAmount = convertWeiToEth(await ptokenContract.balanceOf(projectInfo.address), projectInfo.ptokenAddress);
-        console.log(`<== monitorProject: participate: previous pull amount ${projectInfo.ptokenPoolAmount} ==>`);
-        await Project.update({
-            ptokenPoolAmount: currentPollAmount
-        }, {
-            where: {
-                address: projectInfo.address
-            }
-        });
-        console.log(`<== monitorProject: participate: updated pull amount ${currentPollAmount} ==>`);
-    })
-    projectContract.on('Refund', async (_pToken, _YUSDAmount, _pTokenAmount) => {
-        console.log(`<== monitorProject: Refund (${_pToken}, ${_YUSDAmount}, ${_pTokenAmount}) ==>`);
-        var currentPollAmount = convertWeiToEth(await ptokenContract.balanceOf(projectInfo.address), projectInfo.ptokenAddress);
-        console.log(`<== monitorProject: Refund: previous pull amount ${projectInfo.ptokenPoolAmount} ==>`);
-        await Project.update({
-            ptokenPoolAmount: currentPollAmount
-        }, {
-            where: {
-                address: projectInfo.address
-            }
-        });
-        console.log(`<== monitorProject: Refund: updated pull amount ${currentPollAmount} ==>`);
-    })
+    try {
+        const projectContract = new Contract(
+            projectInfo.address,
+            projectAbi.abi,
+            getProvider()
+        );
+        const ptokenContract = new Contract(
+            projectInfo.ptokenAddress,
+            TokenTemplate.abi,
+            getProvider()
+        )
+        projectContract.on('Participated', async (_pToken, _YUSDAmount, _pTokenAmount) => {
+            console.log(`<== monitorProject: Participated (${_pToken}, ${_YUSDAmount}, ${_pTokenAmount}) ==>`);
+            var currentPollAmount = convertWeiToEth(await ptokenContract.balanceOf(projectInfo.address), projectInfo.ptokenDecimals);
+            console.log(`<== monitorProject: Participated: previous pull amount ${projectInfo.ptokenPoolAmount} ==>`);
+            await Project.update({
+                ptokenPoolAmount: currentPollAmount
+            }, {
+                where: {
+                    address: projectInfo.address
+                }
+            });
+            console.log(`<== monitorProject: Participated: updated pull amount ${currentPollAmount} ==>`);
+        })
+        projectContract.on('Refund', async (_pToken, _YUSDAmount, _pTokenAmount) => {
+            console.log(`<== monitorProject: Refund (${_pToken}, ${_YUSDAmount}, ${_pTokenAmount}) ==>`);
+            var currentPollAmount = convertWeiToEth(await ptokenContract.balanceOf(projectInfo.address), projectInfo.ptokenDecimals);
+            console.log(`<== monitorProject: Refund: previous pull amount ${projectInfo.ptokenPoolAmount} ==>`);
+            await Project.update({
+                ptokenPoolAmount: currentPollAmount
+            }, {
+                where: {
+                    address: projectInfo.address
+                }
+            });
+            console.log(`<== monitorProject: Refund: updated pull amount ${currentPollAmount} ==>`);
+        })
+    } catch (err) {
+        console.log("<=== monitorProject: Error ===>", err.message)
+    }
 }
 
 module.exports = {
