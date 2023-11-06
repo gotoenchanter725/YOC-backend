@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
     address: DataTypes.STRING,
     ptokenAddress: {
       type: DataTypes.STRING,
-      allowNull: false, 
+      allowNull: false,
       unique: true
     },
     ptokenDecimals: DataTypes.INTEGER,
@@ -49,6 +49,7 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'projectTitle'
     })
     ProjectModel.hasOne(models.TradeOrder, { foreignKey: 'ptokenAddress' });
+    ProjectModel.hasOne(models.TradePrice, { foreignKey: 'ptokenAddress' });
   };
 
   return ProjectModel;

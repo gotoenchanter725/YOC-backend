@@ -24,7 +24,6 @@ router.get('/projectTitle/:projectTitle', async (req, res) => {
             },
             order: [['endDate', 'ASC']]
         });
-        console.log('here', votingQueryDetail);
         return res.status(200).json({ votingQueryDetail });
     } catch (error) {
         return res.status(500).send(error.message);

@@ -1,8 +1,13 @@
+const { Contract } = require('ethers');
+const moment = require('moment');
 const { Op } = require('sequelize');
 const { TradeOrder, TradePrice, TradeTransaction, Project } = require('../models');
 const { ProjectTrade, ProjectManager, YUSD, TokenTemplate } = require('../config/contracts');
 const { getProvider, nuanceToPercentage, convertWeiToEth, delay } = require('../untils');
-const { Contract, errors } = require('ethers');
+
+const oneDay = 1000 * 60 * 60 * 24;
+const oneWeek = 1000 * 60 * 60 * 24 * 7;
+const oneMonth = 1000 * 60 * 60 * 24 * 30;
 
 const monitorProjectTrade = async () => {
     try {
@@ -26,7 +31,9 @@ const monitorProjectTrade = async () => {
             const tradePrice = await TradePrice.findOne({
                 where: {
                     timestamp: Number(timestamp),
-                    ptokenAddress: pToken
+                    ptokenAddress: {
+                        [Op.like]: pToken.toLowerCase()
+                    }
                 }
             });
             if (tradePrice) {
@@ -35,7 +42,7 @@ const monitorProjectTrade = async () => {
                 console.log("<== monitorProjectTrade SetPrice: new price detet ==>");
                 const newTradePrice = await TradePrice.create({
                     ptokenAddress: String(pToken),
-                    price: String(price),
+                    price: convertWeiToEth(String(price), YUSD.decimals),
                     timestamp: String(timestamp)
                 })
                 console.log("<== monitorProjectTrade SetPrice: new price saved ==>");
@@ -109,12 +116,11 @@ const allTradeProject = async (req, res) => {
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         const oneDayAgo = new Date();
         oneDayAgo.setDate(oneDayAgo.getDate() - 7);
-        console.log(sevenDaysAgo);
         projects.forEach(async (project) => {
-            if (Number(project.ptokenPoolAmount) >= 0) return;
+            if (Number(project.ptokenPoolAmount) > 0) return;
             // total: project.ptokenTotoalSupply
-            // available: project.ptokenTotoalSupply - project.ptokenPoolAmount
-            // in order: project.ptokenPoolAmount
+            // available: project.ptokenTotoalSupply - project.ptokenTradeBalance
+            // in order: project.ptokenTradeBalance
             // YUSD value: project.YUSDTradePoolAmount
             // price: latest trade price => from price, frist price is the project fund section
             // YUSD Vale: total * price => project.ptokenTotoalSupply * price
@@ -122,15 +128,18 @@ const allTradeProject = async (req, res) => {
             // 7d: nuance percentage for 7 days
             // 24h Volume: total traded YUSD amount for 24 hours
             // Mkt Cap: project.ptokenTotoalSupply * price
-            let pricesFor1d = await tradePriceBetweenDates(oneDayAgo, currentDate, project).average;
-            let pricesFor7d = await tradePriceBetweenDates(sevenDaysAgo, currentDate, project).average;
+            let pricesFor1d = await tradePriceBetweenDates(oneDayAgo, currentDate, project, oneDay / 30);
+            let pricesFor7d = await tradePriceBetweenDates(sevenDaysAgo, currentDate, project, oneWeek / 30);
             data.push({
-                ...project,
-                nauncePercentageFor1d: nuanceToPercentage(pricesFor1d),
-                nauncePercentageFor7d: nuanceToPercentage(pricesFor7d),
+                data: {
+                    ...project.dataValues,
+                },
+                nauncePercentageFor1d: pricesFor1d.nuance,
+                nauncePercentageFor7d: pricesFor7d.nuance,
                 marketCap: project.ptokenTotalSupply * project.price,
                 tradedYUSDFor24h: await totalTradedYUSDAmount(oneDayAgo, currentDate, project),
-                prices: pricesFor7d.data
+                prices: pricesFor7d.data,
+                price: pricesFor7d.data[pricesFor7d.data.length - 1]
             })
         });
         await delay(3000);
@@ -143,39 +152,66 @@ const allTradeProject = async (req, res) => {
     }
 }
 
-const tradePriceBetweenDates = async (endDate, startDate, projectInfo, nuance = 1000 * 60 * 60 * 24) => {
+const tradePriceBetweenDates = async (startDate, endDate, projectInfo, nuance = 1000 * 60 * 60 * 24) => {
     try {
-
         let data = [];
+        const parsedStartDate = moment(startDate, 'YYYY-MM-DD HH:mm:ss').toDate();
+        const parsedEndDate = moment(endDate, 'YYYY-MM-DD HH:mm:ss').toDate();
+        let prevPrice = 0;
+        const pricesBeforePeriod = await TradePrice.findAll({
+            where: {
+                createdAt: {
+                    [Op.lt]: parsedStartDate
+                },
+                ptokenAddress: {
+                    [Op.like]: projectInfo.ptokenAddress.toLowerCase()
+                }
+            }
+        })
+        if (pricesBeforePeriod.length) {
+            prevPrice = pricesBeforePeriod[pricesBeforePeriod.length - 1].ptokenPrice;
+        }
         const prices = await TradePrice.findAll({
             where: {
                 createdAt: {
-                    [Op.between]: [startDate, endDate]
+                    [Op.between]: [parsedStartDate, parsedEndDate]
                 },
-                ptokenAddress: projectInfo.ptokenAddress
+                ptokenAddress: {
+                    [Op.like]: projectInfo.ptokenAddress.toLowerCase()
+                }
             }
         });
         let iterationDate = new Date(startDate);
         iterationDate.setHours(0, 0, 0, 0);
-        let prevPrice = projectInfo.price;
         while (iterationDate <= endDate) {
             let pricesByIterationDate = prices.filter((price) => {
-                return +iterationDate < +new Date(price.createdAt) && +new Date(price.createdAt) < +iterationDate + nuance
+                return +new Date(price.createdAt) < +iterationDate && +new Date(price.createdAt) < +iterationDate + nuance
             })
             let averagePrice = 0;
             if (pricesByIterationDate.length) {
-                averagePrice = pricesByIterationDate.reduce((prev, price) => prev + price.price, 0) / pricesByIterationDate.length;
+                averagePrice = pricesByIterationDate.reduce((prev, price) => +prev + +price.price, 0) / pricesByIterationDate.length;
             } else {
+                if (+new Date(iterationDate) < +new Date(projectInfo.createdAt)) {
+                    prevPrice = 0;
+                } else {
+                    prevPrice = projectInfo.ptokenPrice;
+                }
                 averagePrice = prevPrice;
             }
             data.push({
                 value: averagePrice,
-                date: iterationDate
+                date: Number(iterationDate)
             })
             prevPrice = averagePrice;
             iterationDate = new Date(+iterationDate + nuance);
         }
+        let pricesBetweenStartToEnd = prices.filter((price) => {
+            return +new Date(startDate) < +new Date(price.createdAt) && +new Date(price.createdAt) < +new Date(endDate)
+        })
+        let startPrice = pricesBetweenStartToEnd.length ? pricesBetweenStartToEnd[0].price : 0;
+        let endPrice = pricesBetweenStartToEnd.length ? pricesBetweenStartToEnd[pricesBetweenStartToEnd.length - 1].price : 0;
         return {
+            nuance: nuanceToPercentage(startPrice, endPrice),
             data: data,
             average: data.reduce((prev, p) => p.value + prev, 0) / data.length
         };
@@ -186,10 +222,15 @@ const tradePriceBetweenDates = async (endDate, startDate, projectInfo, nuance = 
 
 const totalTradedYUSDAmount = async (startDate, endDate, projectInfo) => {
     try {
+        console.log('totalTradedYUSDAmount', startDate, endDate, projectInfo.ptokenAddress);
         const transactions = await TradeTransaction.findAll({
             where: {
-                ptokenAddress: projectInfo.ptokenAddress,
-                [Op.between]: [startDate, endDate]
+                ptokenAddress: {
+                    [Op.like]: projectInfo.ptokenAddress.toLowerCase()
+                },
+                createdAt: {
+                    [Op.between]: [startDate, endDate]
+                }
             }
         });
         return transactions.reduce((prev, transaction) => transaction.amount * transaction.price + prev, 0);
@@ -207,7 +248,9 @@ const updatePtokenOfTradeProject = async (pToken) => {
         )
         const projectInfo = await Project.findOne({
             where: {
-                ptokenAddress: pToken
+                ptokenAddress: {
+                    [Op.like]: pToken.toLowerCase()
+                }
             }
         });
         let ptokenBalance = convertWeiToEth(await ptokenContract.balanceOf(ProjectTrade.address), projectInfo.ptokenDecimals);
@@ -216,7 +259,9 @@ const updatePtokenOfTradeProject = async (pToken) => {
             // YUSDTradePoolAmount: YUSDBalance
         }, {
             where: {
-                ptokenAddress: pToken
+                ptokenAddress: {
+                    [Op.like]: pToken.toLowerCase()
+                }
             }
         });
     } catch (error) {
@@ -306,16 +351,18 @@ const projectDetailByPtokenAddress = async (req, res) => {
         const { ptokenAddress } = req.query;
         const project = await Project.findOne({
             where: {
-                ptokenAddress: ptokenAddress
+                ptokenAddress: {
+                    [Op.like]: ptokenAddress.toLowerCase()
+                }
             }
         })
 
         const currentDate = new Date();
         const oneDayAgo = new Date();
-        oneDayAgo.setDate(oneDayAgo.getDate() - 7);
+        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
         let pricesFor1d = [];
         if (project) {
-            pricesFor1d = tradePriceBetweenDates(currentDate, oneDayAgo, project);
+            pricesFor1d = await tradePriceBetweenDates(oneDayAgo, currentDate, project, oneDay / 30);
         } else throw "No project";
 
         const orders = await TradeOrder.findAll({
@@ -326,7 +373,9 @@ const projectDetailByPtokenAddress = async (req, res) => {
                 }
             ],
             where: {
-                ptokenAddress: ptokenAddress
+                ptokenAddress: {
+                    [Op.like]: ptokenAddress.toLowerCase()
+                }
             },
             order: [['createdAt', 'ASC']],
         });
@@ -361,14 +410,16 @@ const pricesByPtokenAddress = async (req, res) => {
         const { period, ptokenAddress } = req.query;
         const project = await Project.findOne({
             where: {
-                ptokenAddress: ptokenAddress
+                ptokenAddress: {
+                    [Op.like]: ptokenAddress.toLowerCase()
+                }
             }
         })
         let currentDate = new Date();
         let periodAgo = new Date(+currentDate - period);
         periodAgo.setHours(0, 0, 0, 0);
         if (project) {
-            let prices = tradePriceBetweenDates(currentDate, periodAgo, project, period / 30)
+            let prices = await tradePriceBetweenDates(periodAgo, currentDate, project, period / 30)
             res.status(200).json({
                 status: true,
                 data: prices.data

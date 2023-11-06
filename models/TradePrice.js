@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
     TradePriceModel.associate = function (models) {
         // associations can be defined here
 
-        TradePriceModel.belongsTo(models.Project, { foreignKey: 'projectId' })
+        TradePriceModel.belongsTo(models.Project, { foreignKey: 'ptokenAddress' })
     };
 
     return TradePriceModel;

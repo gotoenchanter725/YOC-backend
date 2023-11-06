@@ -1,5 +1,5 @@
 const { Project } = require('../models');
-const { TokenTemplate, Project: projectAbi, ProjectManager, ProjectTrade, PRIVATE_KEY } = require("../config/contracts");
+const { TokenTemplate, Project: projectAbi, ProjectManager, ProjectTrade, PRIVATE_KEY, YUSD } = require("../config/contracts");
 const { getProvider, delay, convertWeiToEth, convertEthToWei } = require('../untils');
 const { Contract, ethers } = require('ethers');
 
@@ -36,7 +36,7 @@ const create = async (req, res) => {
                 signer
             )
             // when create new project, set the price in trade project
-            let tx = await ProjectTradeContract.setPriceByAdmin(data.address, data.price);
+            let tx = await ProjectTradeContract.setPriceByAdmin(data.address, convertEthToWei(data.price, YUSD.decimals));
             await tx.wait();
             return res.status(201).json({
                 project,
