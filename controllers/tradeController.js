@@ -1,6 +1,6 @@
 const { Contract } = require('ethers');
 const moment = require('moment');
-const { Op } = require('sequelize');
+const { Op, where } = require('sequelize');
 const { TradeOrder, TradePrice, TradeTransaction, Project } = require('../models');
 const { ProjectTrade, ProjectManager, YUSD, TokenTemplate } = require('../config/contracts');
 const { getProvider, nuanceToPercentage, convertWeiToEth, delay } = require('../untils');
@@ -23,7 +23,7 @@ const monitorProjectTrade = async () => {
             getProvider()
         );
         ProjectTradeContract.on("AddNewProjectToken", (pToken, timestamp) => {
-
+            console.log(`<== monitorProjectTrade AddNewProjectToken: (${pToken}, ${timestamp}) ==>`)
         });
 
         ProjectTradeContract.on("SetPrice", async (pToken, price, timestamp) => {
@@ -45,7 +45,7 @@ const monitorProjectTrade = async () => {
                     price: convertWeiToEth(String(price), YUSD.decimals),
                     timestamp: String(timestamp)
                 })
-                console.log("<== monitorProjectTrade SetPrice: new price saved ==>");
+                console.log("<== monitorProjectTrade SetPrice: new price saved ==>",);
             }
         })
 
@@ -53,13 +53,13 @@ const monitorProjectTrade = async () => {
             console.log(`<== monitorProjectTrade OrderCreated: new order detect (${pToken}, ${userAddress}, ${orderId}, ${amount}, ${price}, ${isBuy}) ==>`);
             try {
                 const newTradeOrder = await TradeOrder.create({
-                    orderId: orderId,
-                    ptokenAddress: pToken,
-                    userAddress: userAddress,
-                    price: price,
-                    totalAmount: amount,
-                    remainingAmount: amount,
-                    isBuy: isBuy,
+                    orderId: Number(orderId),
+                    ptokenAddress: String(pToken),
+                    userAddress: String(userAddress),
+                    price: String(price),
+                    totalAmount: String(amount),
+                    remainingAmount: String(amount),
+                    isBuy: Boolean(isBuy),
                     transactionIds: ""
                 });
                 console.log(`<== monitorProjectTrade OrderCreated: new order saved ==>`);
@@ -68,33 +68,56 @@ const monitorProjectTrade = async () => {
                 updatePtokenOfTradeProject(pToken);
                 console.log(`<== monitorProjectTrade OrderCreated: updated project info ==>`)
             } catch (err) {
-                console.log(`<== monitorProjectTrade OrderCreated: error ==>`);
+                console.log(`<== monitorProjectTrade OrderCreated: error ==>`, err);
             }
         });
 
-        // ProjectTradeContract.on("TradeOrder", (pToken, userAddress, orderId) => {
-        //     console.log(`<== monitorProjectTrade TradeOrder: (${pToken}, ${userAddress}, ${orderId}) ==>`);
-        // });
+        ProjectTradeContract.on("TradeOrder", (pToken, userAddress, orderId) => {
+            console.log(`<== monitorProjectTrade TradeOrder: (${pToken}, ${userAddress}, ${orderId}) ==>`);
+        });
 
-        ProjectTradeContract.on("TradeTransaction", async (pToken, amount, price, transactionId, buyOwner, sellOwner, buyOrderId, sellOwnerId, timestamp) => {
-            console.log(`<== monitorProjectTrade TradeTransaction: (${pToken}, ${amount}, ${price}, ${transactionId}, ${buyOwner}, ${sellOwner}, ${buyOrderId}, ${sellOwnerId}, ${timestamp}) ==>`);
+        ProjectTradeContract.on("TradeTransaction", async (pToken, amount, price, transactionId, buyOwner, sellOwner, buyOrderId, sellOrderId, timestamp) => {
+            console.log(`<== monitorProjectTrade TradeTransaction: (${pToken}, ${amount}, ${price}, ${transactionId}, ${buyOwner}, ${sellOwner}, ${buyOrderId}, ${sellOrderId}, ${timestamp}) ==>`);
             try {
+                const projectInfo = await Project.findOne({
+                    where: {
+                        ptokenAddress: {
+                            [Op.like]: pToken.toLowerCase()
+                        }
+                    }
+                });
                 const newTradeTransaction = await TradeTransaction.create({
-                    transactionId: transactionId,
-                    amount: amount,
-                    ptokenAddress: pToken,
-                    price: price,
-                    buyOrderId: buyOrderId,
-                    sellOwnerId: sellOwnerId
+                    transactionId: Number(transactionId),
+                    amount: convertWeiToEth(String(amount), projectInfo.ptokenDecimals),
+                    ptokenAddress: String(pToken),
+                    price: convertWeiToEth(String(price), YUSD.decimals),
+                    buyOrderId: String(buyOrderId),
+                    sellOrderId: String(sellOrderId)
                 });
                 // add transaction Id in order
                 addTransactionByOrderId(buyOrderId, transactionId);
-                addTransactionByOrderId(sellOwnerId, transactionId);
+                addTransactionByOrderId(sellOrderId, transactionId);
                 // update full Ptoken and YUSD
                 updatePtokenOfTradeProject(pToken);
                 console.log(`<== monitorProjectTrade OrderCreated: new order saved ==>`);
             } catch (err) {
                 console.log(`<== monitorProjectTrade OrderCreated: error ==>`);
+            }
+        });
+
+        ProjectTradeContract.on("CancelOrder", async (pToken, orderId) => {
+            try {
+                console.log(`<== monitorProjectTrade CancelOrder: (${pToken}, ${orderId}) ==>`);
+                await TradeOrder.update({
+                    isCancelled: true
+                }, {
+                    where: {
+                        ptokenAddress: String(pToken),
+                        orderId: Number(orderId)
+                    }
+                })
+            } catch (err) {
+                console.log(`<== monitorProjectTrade CancelOrder Err: ${err} ==>`)
             }
         });
     } catch (err) {
@@ -158,7 +181,7 @@ const tradePriceBetweenDates = async (startDate, endDate, projectInfo, nuance = 
         const parsedStartDate = moment(startDate, 'YYYY-MM-DD HH:mm:ss').toDate();
         const parsedEndDate = moment(endDate, 'YYYY-MM-DD HH:mm:ss').toDate();
         let prevPrice = 0;
-        const pricesBeforePeriod = await TradePrice.findAll({
+        const pricesBeforePeriod = await TradePrice.findOne({
             where: {
                 createdAt: {
                     [Op.lt]: parsedStartDate
@@ -166,11 +189,13 @@ const tradePriceBetweenDates = async (startDate, endDate, projectInfo, nuance = 
                 ptokenAddress: {
                     [Op.like]: projectInfo.ptokenAddress.toLowerCase()
                 }
-            }
+            },
+            order: [['createdAt', 'DESC']]
         })
-        if (pricesBeforePeriod.length) {
-            prevPrice = pricesBeforePeriod[pricesBeforePeriod.length - 1].ptokenPrice;
+        if (pricesBeforePeriod) {
+            prevPrice = pricesBeforePeriod.price;
         }
+        console.log(prevPrice);
         const prices = await TradePrice.findAll({
             where: {
                 createdAt: {
@@ -184,23 +209,21 @@ const tradePriceBetweenDates = async (startDate, endDate, projectInfo, nuance = 
         let iterationDate = new Date(startDate);
         iterationDate.setHours(0, 0, 0, 0);
         while (iterationDate <= endDate) {
-            let pricesByIterationDate = prices.filter((price) => {
-                return +new Date(price.createdAt) < +iterationDate && +new Date(price.createdAt) < +iterationDate + nuance
-            })
+            let pricesByIterationDate = [...prices.filter((price) => {
+                return +iterationDate < +new Date(price.createdAt) && +new Date(price.createdAt) < +iterationDate + nuance
+            })]
             let averagePrice = 0;
             if (pricesByIterationDate.length) {
                 averagePrice = pricesByIterationDate.reduce((prev, price) => +prev + +price.price, 0) / pricesByIterationDate.length;
             } else {
                 if (+new Date(iterationDate) < +new Date(projectInfo.createdAt)) {
                     prevPrice = 0;
-                } else {
-                    prevPrice = projectInfo.ptokenPrice;
                 }
                 averagePrice = prevPrice;
             }
             data.push({
                 value: averagePrice,
-                date: Number(iterationDate)
+                date: iterationDate
             })
             prevPrice = averagePrice;
             iterationDate = new Date(+iterationDate + nuance);
@@ -255,7 +278,7 @@ const updatePtokenOfTradeProject = async (pToken) => {
         });
         let ptokenBalance = convertWeiToEth(await ptokenContract.balanceOf(ProjectTrade.address), projectInfo.ptokenDecimals);
         await Project.update({
-            ptokenPoolAmount: ptokenBalance,
+            ptokenTradeBalance: ptokenBalance,
             // YUSDTradePoolAmount: YUSDBalance
         }, {
             where: {
@@ -302,13 +325,46 @@ const allTradeOrdersByAddress = async (req, res) => {
             },
             order: [['createdAt', 'ASC']],
         });
+        for (let i = 0; i < data.length; i++) {
+            let item = data[i], transactionData;
+            console.log(item.ptokenAddress)
+            if (item.isBuy) {
+                transactionData = await TradeTransaction.findAll({
+                    where: {
+                        ptokenAddress: {
+                            [Op.like]: item.ptokenAddress.toLowerCase(),
+                        },
+                        buyOrderId: item.orderId
+                    }
+                })
+            } else {
+                transactionData = await TradeTransaction.findAll({
+                    where: {
+                        ptokenAddress: {
+                            [Op.like]: item.ptokenAddress.toLowerCase()
+                        },
+                        sellOrderId: item.orderId
+                    }
+                })
+            }
+            let averagePrice = 0;
+            if (transactionData.length) averagePrice = transactionData.reduce((total, item) => total + Number(item.price), 0) / transactionData.length;
+            data[i] = {
+                ...item.dataValues,
+                averagePrice: averagePrice,
+                transactions: [
+                    ...transactionData
+                ]
+            };
+        }
         await delay(3000);
 
         return res.status(200).json({
             data
         })
     } catch (err) {
-        return res.status(500).json({ error: '' })
+        console.log(`allTradeOrdersByAddress:`, err);
+        return res.status(500).json({ error: err })
     }
 }
 

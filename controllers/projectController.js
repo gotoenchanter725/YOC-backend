@@ -1,4 +1,4 @@
-const { Project } = require('../models');
+const { Project, TradePrice } = require('../models');
 const { TokenTemplate, Project: projectAbi, ProjectManager, ProjectTrade, PRIVATE_KEY, YUSD } = require("../config/contracts");
 const { getProvider, delay, convertWeiToEth, convertEthToWei } = require('../untils');
 const { Contract, ethers } = require('ethers');
@@ -27,6 +27,11 @@ const create = async (req, res) => {
                 ptokenPrice: data.price
             });
             monitorProject(project);
+            const newTradePrice = await TradePrice.create({
+                ptokenAddress: data.ptokenAddress,
+                price: data.price,
+                timestamp: String(+new Date())
+            })
 
 
             const signer = new ethers.Wallet(PRIVATE_KEY, getProvider());

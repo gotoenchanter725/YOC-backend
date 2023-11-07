@@ -24,9 +24,6 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     TradeTransactionModel.associate = function (models) {
-        // associations can be defined here
-
-        TradeTransactionModel.belongsTo(models.VotingQuery, { foreignKey: 'queryId' })
     };
 
     return TradeTransactionModel;
