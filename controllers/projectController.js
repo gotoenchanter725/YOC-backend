@@ -27,12 +27,12 @@ const create = async (req, res) => {
                 ptokenPrice: data.price
             });
             monitorProject(project);
-            const newTradePrice = await TradePrice.create({
-                ptokenAddress: data.ptokenAddress,
-                price: data.price,
-                timestamp: String(+new Date())
-            })
 
+            // const newTradePrice = await TradePrice.create({
+            //     ptokenAddress: data.ptokenAddress,
+            //     price: data.price,
+            //     timestamp: String(+new Date())
+            // })
 
             const signer = new ethers.Wallet(PRIVATE_KEY, getProvider());
             let ProjectTradeContract = new Contract(
@@ -41,7 +41,7 @@ const create = async (req, res) => {
                 signer
             )
             // when create new project, set the price in trade project
-            let tx = await ProjectTradeContract.setPriceByAdmin(data.address, convertEthToWei(data.price, YUSD.decimals));
+            let tx = await ProjectTradeContract.setPriceByAdmin(data.ptokenAddress, convertEthToWei(data.price, YUSD.decimals));
             await tx.wait();
             return res.status(201).json({
                 project,
@@ -52,6 +52,7 @@ const create = async (req, res) => {
             });
         }
     } catch (error) {
+        console.log(`<== Project create: error ${error} ==>`)
         return res.status(500).json({ error: error.message })
     }
 };

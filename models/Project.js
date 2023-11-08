@@ -48,8 +48,8 @@ module.exports = (sequelize, DataTypes) => {
     ProjectModel.hasMany(models.VotingQuery, {
       foreignKey: 'projectTitle'
     })
-    ProjectModel.hasOne(models.TradeOrder, { foreignKey: 'ptokenAddress' });
-    ProjectModel.hasOne(models.TradePrice, { foreignKey: 'ptokenAddress' });
+    ProjectModel.hasMany(models.TradeOrder, { foreignKey: 'ptokenAddress', sourceKey: 'ptokenAddress', as: 'orders' });
+    ProjectModel.hasMany(models.TradePrice, { foreignKey: 'ptokenAddress', sourceKey: 'ptokenAddress', as: 'prices' });
   };
 
   return ProjectModel;

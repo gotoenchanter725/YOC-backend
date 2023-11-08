@@ -52,13 +52,20 @@ const monitorProjectTrade = async () => {
         ProjectTradeContract.on("OrderCreated", async (pToken, userAddress, orderId, amount, price, isBuy) => {
             console.log(`<== monitorProjectTrade OrderCreated: new order detect (${pToken}, ${userAddress}, ${orderId}, ${amount}, ${price}, ${isBuy}) ==>`);
             try {
+                const projectInfo = await Project.findOne({
+                    where: {
+                        ptokenAddress: {
+                            [Op.like]: pToken.toLowerCase()
+                        }
+                    }
+                });
                 const newTradeOrder = await TradeOrder.create({
                     orderId: Number(orderId),
                     ptokenAddress: String(pToken),
                     userAddress: String(userAddress),
-                    price: String(price),
-                    totalAmount: String(amount),
-                    remainingAmount: String(amount),
+                    price: String(convertWeiToEth(price, YUSD.decimals)),
+                    totalAmount: String(convertWeiToEth(amount, projectInfo.ptokenDecimals)),
+                    remainingAmount: String(convertWeiToEth(amount, projectInfo.ptokenDecimals)),
                     isBuy: Boolean(isBuy),
                     transactionIds: ""
                 });
@@ -421,6 +428,11 @@ const projectDetailByPtokenAddress = async (req, res) => {
             pricesFor1d = await tradePriceBetweenDates(oneDayAgo, currentDate, project, oneDay / 30);
         } else throw "No project";
 
+        let latestPrice = project.ptokenPrice;
+        if (pricesFor1d && pricesFor1d.data) {
+            latestPrice = pricesFor1d.data[pricesFor1d.data.length - 1].value;
+        }
+
         const orders = await TradeOrder.findAll({
             include: [
                 {
@@ -441,22 +453,14 @@ const projectDetailByPtokenAddress = async (req, res) => {
             data: {
                 project,
                 pricesFor1d,
-                orders
+                orders,
+                latestPrice
             }
         })
     } catch (err) {
         console.log('projectDetailByPtokenAddress', err);
-        // res.status(500).json({
-        //     status: false,
-        // })
-
-        res.status(200).json({
-            status: true,
-            data: {
-                project: {},
-                pricesFor1d: [],
-                orders: []
-            }
+        res.status(500).json({
+            status: false,
         })
     }
 }
