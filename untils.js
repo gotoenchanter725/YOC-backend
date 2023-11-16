@@ -32,10 +32,10 @@ const nuanceToPercentage = (first, second) => {
 }
 
 module.exports = {
-    delay, 
-    convertEthToWei, 
-    convertWeiToEth, 
-    getRPCURL, 
+    delay,
+    convertEthToWei,
+    convertWeiToEth,
+    getRPCURL,
     getProvider,
     nuanceToPercentage
 }

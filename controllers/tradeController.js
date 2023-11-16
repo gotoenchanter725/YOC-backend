@@ -55,7 +55,7 @@ const monitorProjectTrade = async () => {
                 const projectInfo = await Project.findOne({
                     where: {
                         ptokenAddress: {
-                            [Op.like]: pToken.toLowerCase()
+                            [Op.like]: String(pToken).toLowerCase()
                         }
                     }
                 });
@@ -72,15 +72,40 @@ const monitorProjectTrade = async () => {
                 console.log(`<== monitorProjectTrade OrderCreated: new order saved ==>`);
                 // check the Ptoken and YUSD pool
                 // let YUSDBalance = convertWeiToEth(await YUSD.balanceOf(ProjectTrade.address), YUSD.decimals);
-                updatePtokenOfTradeProject(pToken);
+                updatePtokenOfTradeProject(String(pToken));
                 console.log(`<== monitorProjectTrade OrderCreated: updated project info ==>`)
             } catch (err) {
                 console.log(`<== monitorProjectTrade OrderCreated: error ==>`, err);
             }
         });
 
-        ProjectTradeContract.on("TradeOrder", (pToken, userAddress, orderId) => {
-            console.log(`<== monitorProjectTrade TradeOrder: (${pToken}, ${userAddress}, ${orderId}) ==>`);
+        ProjectTradeContract.on("TradeOrder", async (pToken, userAddress, orderId) => {
+            try {
+                console.log(`<== monitorProjectTrade TradeOrder: (${pToken}, ${userAddress}, ${orderId}) ==>`);
+                const projectInfo = await Project.findOne({
+                    where: {
+                        ptokenAddress: {
+                            [Op.like]: pToken.toLowerCase()
+                        }
+                    }
+                });
+                const orderInfo = await ProjectTradeContract.orders(String(pToken), Number(orderId));
+                const remainingAmount = convertWeiToEth(orderInfo.remainingAmount, projectInfo.ptokenDecimals);
+                await TradeOrder.update({
+                    remainingAmount: remainingAmount
+                },
+                    {
+                        where: {
+                            ptokenAddress: {
+                                [Op.like]: String(pToken).toLowerCase()
+                            },
+                            orderId: Number(orderId)
+                        }
+                    }
+                );
+            } catch (error) {
+                console.log(`<== monitorProjectTrade TradeOrder: error`, error);
+            }
         });
 
         ProjectTradeContract.on("TradeTransaction", async (pToken, amount, price, transactionId, buyOwner, sellOwner, buyOrderId, sellOrderId, timestamp) => {
@@ -102,10 +127,10 @@ const monitorProjectTrade = async () => {
                     sellOrderId: String(sellOrderId)
                 });
                 // add transaction Id in order
-                addTransactionByOrderId(buyOrderId, transactionId);
-                addTransactionByOrderId(sellOrderId, transactionId);
+                addTransactionByOrderId(String(pToken), String(buyOrderId), String(transactionId));
+                addTransactionByOrderId(String(pToken), String(sellOrderId), String(transactionId));
                 // update full Ptoken and YUSD
-                updatePtokenOfTradeProject(pToken);
+                updatePtokenOfTradeProject(String(pToken));
                 console.log(`<== monitorProjectTrade OrderCreated: new order saved ==>`);
             } catch (err) {
                 console.log(`<== monitorProjectTrade OrderCreated: error ==>`);
@@ -119,10 +144,13 @@ const monitorProjectTrade = async () => {
                     isCancelled: true
                 }, {
                     where: {
-                        ptokenAddress: String(pToken),
+                        ptokenAddress: {
+                            [Op.like]: String(pToken).toLowerCase()
+                        },
                         orderId: Number(orderId)
                     }
                 })
+                updatePtokenOfTradeProject(String(pToken));
             } catch (err) {
                 console.log(`<== monitorProjectTrade CancelOrder Err: ${err} ==>`)
             }
@@ -134,6 +162,7 @@ const monitorProjectTrade = async () => {
 
 const allTradeProject = async (req, res) => {
     try {
+        let { address } = req.query;
         let data = [];
         const projects = await Project.findAll({
             order: [['createdAt', 'ASC']]
@@ -149,9 +178,7 @@ const allTradeProject = async (req, res) => {
         projects.forEach(async (project) => {
             if (Number(project.ptokenPoolAmount) > 0) return;
             // total: project.ptokenTotoalSupply
-            // available: project.ptokenTotoalSupply - project.ptokenTradeBalance
-            // in order: project.ptokenTradeBalance
-            // YUSD value: project.YUSDTradePoolAmount
+            // in order: project.ptokenTradeBalance by address
             // price: latest trade price => from price, frist price is the project fund section
             // YUSD Vale: total * price => project.ptokenTotoalSupply * price
             // 24h: nuance percentage for 24 hours
@@ -164,10 +191,11 @@ const allTradeProject = async (req, res) => {
                 data: {
                     ...project.dataValues,
                 },
+                inOrder: await tradePtokenBalanceByAddress(project.ptokenAddress, address),
                 nauncePercentageFor1d: pricesFor1d.nuance,
                 nauncePercentageFor7d: pricesFor7d.nuance,
-                marketCap: project.ptokenTotalSupply * project.price,
-                tradedYUSDFor24h: await totalTradedYUSDAmount(oneDayAgo, currentDate, project),
+                marketCap: project.ptokenSellAmount * pricesFor7d.data[pricesFor7d.data.length - 1].value,
+                tradedYUSDFor24h: await totalTradedYUSDAmount(oneDayAgo, currentDate, project.ptokenAddress),
                 prices: pricesFor7d.data,
                 price: pricesFor7d.data[pricesFor7d.data.length - 1]
             })
@@ -179,6 +207,38 @@ const allTradeProject = async (req, res) => {
     } catch (err) {
         console.log('allTradeProject', err);
         return res.status(500).json({ error: '' })
+    }
+}
+
+const tradePtokenBalanceByAddress = async (pToken, address) => {
+    try {
+        const orders = await TradeOrder.findAll({
+            include: [
+                {
+                    model: Project,
+                    as: 'project',
+                }
+            ],
+            where: {
+                ptokenAddress: {
+                    [Op.like]: pToken.toLowerCase()
+                },
+                userAddress: {
+                    [Op.like]: address.toLowerCase()
+                }
+            },
+            order: [['createdAt', 'ASC']],
+        });
+        let totalYUSDBalance = 0;
+        orders.forEach((order) => {
+            if (order.isBuy == 0 && Number(order.remainingAmount) > 0) {
+                totalYUSDBalance += Number(order.remainingAmount);
+            } else return;
+        });
+        return totalYUSDBalance;
+    } catch (err) {
+        console.log('tradePtokenBalanceByAddress', err)
+        return 0;
     }
 }
 
@@ -202,7 +262,6 @@ const tradePriceBetweenDates = async (startDate, endDate, projectInfo, nuance = 
         if (pricesBeforePeriod) {
             prevPrice = pricesBeforePeriod.price;
         }
-        console.log(prevPrice);
         const prices = await TradePrice.findAll({
             where: {
                 createdAt: {
@@ -235,11 +294,11 @@ const tradePriceBetweenDates = async (startDate, endDate, projectInfo, nuance = 
             prevPrice = averagePrice;
             iterationDate = new Date(+iterationDate + nuance);
         }
-        let pricesBetweenStartToEnd = prices.filter((price) => {
-            return +new Date(startDate) < +new Date(price.createdAt) && +new Date(price.createdAt) < +new Date(endDate)
-        })
-        let startPrice = pricesBetweenStartToEnd.length ? pricesBetweenStartToEnd[0].price : 0;
-        let endPrice = pricesBetweenStartToEnd.length ? pricesBetweenStartToEnd[pricesBetweenStartToEnd.length - 1].price : 0;
+        let startPrice = data.length ? data[0].value : 0;
+        if (startPrice == 0) {
+            startPrice = projectInfo.ptokenPrice
+        }
+        let endPrice = data.length ? data[data.length - 1].value : 0;
         return {
             nuance: nuanceToPercentage(startPrice, endPrice),
             data: data,
@@ -250,13 +309,13 @@ const tradePriceBetweenDates = async (startDate, endDate, projectInfo, nuance = 
     }
 }
 
-const totalTradedYUSDAmount = async (startDate, endDate, projectInfo) => {
+const totalTradedYUSDAmount = async (startDate, endDate, ptokenAddress) => {
     try {
-        console.log('totalTradedYUSDAmount', startDate, endDate, projectInfo.ptokenAddress);
+        console.log('totalTradedYUSDAmount', startDate, endDate, ptokenAddress);
         const transactions = await TradeTransaction.findAll({
             where: {
                 ptokenAddress: {
-                    [Op.like]: projectInfo.ptokenAddress.toLowerCase()
+                    [Op.like]: ptokenAddress.toLowerCase()
                 },
                 createdAt: {
                     [Op.between]: [startDate, endDate]
@@ -276,6 +335,11 @@ const updatePtokenOfTradeProject = async (pToken) => {
             TokenTemplate.abi,
             getProvider()
         )
+        const YUSDContract = new Contract(
+            YUSD.address,
+            YUSD.abi,
+            getProvider()
+        )
         const projectInfo = await Project.findOne({
             where: {
                 ptokenAddress: {
@@ -284,9 +348,10 @@ const updatePtokenOfTradeProject = async (pToken) => {
             }
         });
         let ptokenBalance = convertWeiToEth(await ptokenContract.balanceOf(ProjectTrade.address), projectInfo.ptokenDecimals);
+        let YUSDTradePoolAmount = convertWeiToEth(await YUSDContract.balanceOf(ProjectTrade.address), YUSD.decimals);
         await Project.update({
             ptokenTradeBalance: ptokenBalance,
-            // YUSDTradePoolAmount: YUSDBalance
+            YUSDTradePoolAmount: YUSDTradePoolAmount
         }, {
             where: {
                 ptokenAddress: {
@@ -299,19 +364,26 @@ const updatePtokenOfTradeProject = async (pToken) => {
     }
 }
 
-const addTransactionByOrderId = async (orderId, transactionId) => {
+const addTransactionByOrderId = async (ptokenAddress, orderId, transactionId) => {
+    console.log(`<== addTransactionByOrderId: ${orderId}, ${transactionId}`);
     try {
-        let buyOrder = await TradeOrder.findOne({
+        let order = await TradeOrder.findOne({
             where: {
                 orderId: orderId
             }
         });
-        let buyOrderTransactionIds = buyOrder.transactionIds.split(',');
-        buyOrderTransactionIds.push(transactionId);
+        let orderTransactionIds = order.transactionIds.split(',');
+        orderTransactionIds.push(transactionId);
         await TradeOrder.update({
-            transactionIds: buyOrderTransactionIds.join(',')
+            transactionIds: orderTransactionIds.join(',')
+        }, {
+            where: {
+                orderId: orderId,
+                ptokenAddress: {
+                    [Op.like]: ptokenAddress.toLowerCase()
+                }
+            }
         })
-
     } catch (error) {
         console.log('addTransactionByOrderId', error.message)
     }
@@ -328,13 +400,14 @@ const allTradeOrdersByAddress = async (req, res) => {
                 }
             ],
             where: {
-                userAddress: address
+                userAddress: {
+                    [Op.like]: address.toLowerCase()
+                }
             },
             order: [['createdAt', 'ASC']],
         });
         for (let i = 0; i < data.length; i++) {
             let item = data[i], transactionData;
-            console.log(item.ptokenAddress)
             if (item.isBuy) {
                 transactionData = await TradeTransaction.findAll({
                     where: {
@@ -386,7 +459,9 @@ const tradedYUSDByAddress = async (req, res) => {
                 }
             ],
             where: {
-                userAddress: address
+                userAddress: {
+                    [Op.like]: address.toLowerCase()
+                }
             },
             order: [['createdAt', 'ASC']],
         });
@@ -524,6 +599,24 @@ const allTransactionByOrderId = async (req, res) => {
     }
 }
 
+const variationByPtokenAddressAndPeriod = async (req, res) => {
+    try {
+        const { period, ptokenAddress } = req.query;
+        let currentDate = new Date(), periodAgo = new Date();
+        periodAgo = new Date(Number(periodAgo) - period);
+        let tradedYUSDForPeriod = await totalTradedYUSDAmount(periodAgo, currentDate, ptokenAddress);
+        res.status(200).json({
+            status: true,
+            value: tradedYUSDForPeriod
+        })
+    } catch (err) {
+        console.log('pricesByPtokenAddress', err)
+        res.status(500).json({
+            status: false
+        })
+    }
+}
+
 module.exports = {
     allTradeProject,
     allTradeOrdersByAddress,
@@ -531,5 +624,6 @@ module.exports = {
     tradedYUSDByAddress,
     monitorProjectTrade,
     pricesByPtokenAddress,
+    variationByPtokenAddressAndPeriod,
     allTransactionByOrderId
 }
