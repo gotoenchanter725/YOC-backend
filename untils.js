@@ -13,17 +13,19 @@ const convertWeiToEth = function (wei, decimals) {
     return ethers.utils.formatUnits(wei, decimals);
 }
 
-const getRPCURL = function () {
-    if (process.env.NODE_ENV == 'production') {
-        return NETWORK.mainnet.RPC_URL;
-    } else {
-        return NETWORK.testnet.RPC_URL;
-    }
+const getProvider = function () {
+    if (NETWORK.wss.indexOf("wss://")) {
+        return getWebSocketProvider()
+    } else return getJsonProvider();
 }
 
-const getProvider = function () {
-    const rpc_url = getRPCURL();
-    const provider = new ethers.providers.JsonRpcProvider(rpc_url);
+const getJsonProvider = function () {
+    const provider = new ethers.providers.JsonRpcProvider(NETWORK.RPC_URL);
+    return provider;
+}
+
+const getWebSocketProvider = function () {
+    const provider = new ethers.providers.WebSocketProvider(NETWORK.wss);
     return provider;
 }
 
@@ -35,7 +37,8 @@ module.exports = {
     delay,
     convertEthToWei,
     convertWeiToEth,
-    getRPCURL,
     getProvider,
+    getJsonProvider,
+    getWebSocketProvider,
     nuanceToPercentage
 }
