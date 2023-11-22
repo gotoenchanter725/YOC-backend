@@ -24,7 +24,7 @@ const create = async (req, res) => {
                 ptokenSymbol: data.projectTitle,
                 ptokenSellAmount: data.sellAmount,
                 ptokenPoolAmount: data.sellAmount,
-                ptokenPrice: data.price
+                ptokenPrice: 1 / Number(data.price)
             });
             monitorProject(project);
 
@@ -41,7 +41,9 @@ const create = async (req, res) => {
                 signer
             )
             // when create new project, set the price in trade project
-            let tx = await ProjectTradeContract.setPriceByAdmin(data.ptokenAddress, convertEthToWei(data.price, YUSD.decimals));
+            let tx = await ProjectTradeContract.setPriceByAdmin(data.ptokenAddress, convertEthToWei(1 / data.price, YUSD.decimals), {
+                gasLimit: 50000
+            });
             await tx.wait();
             return res.status(201).json({
                 project,
@@ -79,6 +81,7 @@ const scanMonitorProjects = async () => {
 
 const monitorProject = (projectInfo) => {
     try {
+        console.log(`<== monitorProject: start ${projectInfo.address} ==>`);
         const projectContract = new Contract(
             projectInfo.address,
             projectAbi.abi,

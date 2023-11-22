@@ -14,17 +14,19 @@ const convertWeiToEth = function (wei, decimals) {
 }
 
 const getProvider = function () {
-    if (NETWORK.wss.indexOf("wss://")) {
+    if (NETWORK.wss.indexOf("wss://") == -1) {
         return getWebSocketProvider()
     } else return getJsonProvider();
 }
 
 const getJsonProvider = function () {
+    // console.log('getJsonProvider', NETWORK.RPC_URL);
     const provider = new ethers.providers.JsonRpcProvider(NETWORK.RPC_URL);
     return provider;
 }
 
 const getWebSocketProvider = function () {
+    // console.log('getWebSocketProvider', NETWORK.wss);
     const provider = new ethers.providers.WebSocketProvider(NETWORK.wss);
     return provider;
 }

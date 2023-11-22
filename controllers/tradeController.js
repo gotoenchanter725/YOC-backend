@@ -231,7 +231,7 @@ const tradePtokenBalanceByAddress = async (pToken, address) => {
         });
         let totalYUSDBalance = 0;
         orders.forEach((order) => {
-            if (order.isBuy == 0 && Number(order.remainingAmount) > 0) {
+            if (order.isBuy == 0 && Number(order.remainingAmount) > 0 && Number(order.isCancelled) == 0) {
                 totalYUSDBalance += Number(order.remainingAmount);
             } else return;
         });
@@ -467,7 +467,7 @@ const tradedYUSDByAddress = async (req, res) => {
         });
         let totalYUSDBalance = 0;
         orders.forEach((order) => {
-            if (order.isBuy && Number(order.remainingAmount) > 0) {
+            if (order.isBuy && Number(order.remainingAmount) > 0 && Number(order.isCancelled) == 0) {
                 totalYUSDBalance += Number(order.remainingAmount) * 1.0019;
             } else return;
         });
