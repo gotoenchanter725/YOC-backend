@@ -41,8 +41,9 @@ const create = async (req, res) => {
                 signer
             )
             // when create new project, set the price in trade project
+            console.log('price::', convertEthToWei(1 / data.price, YUSD.decimals));
             let tx = await ProjectTradeContract.setPriceByAdmin(data.ptokenAddress, convertEthToWei(1 / data.price, YUSD.decimals), {
-                gasLimit: 50000
+                gasLimit: 75000
             });
             await tx.wait();
             return res.status(201).json({
