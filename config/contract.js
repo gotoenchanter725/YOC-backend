@@ -70,7 +70,7 @@ const BNB_CONTRACT_ADDRESS = {
     ProjectTradeAddress: "0xBFF3F3b75390934ff5e48c2381967c691BDA3074",
 }
 
-const NETWORK = process.env.NET_WORK === "ETH" ? (process.env.NODE_ENV == 'development' ? ETH_NETWORK.testnet : ETH_NETWORK.mainnet) : (process.env.NODE_ENV == 'development' ? BNB_NETWORK.testnet : BNB_NETWORK.mainnet);
+const NETWORK = process.env.NET_WORK === "ETH" ? (process.env.NODE_ENV != 'production' ? ETH_NETWORK.testnet : ETH_NETWORK.mainnet) : (process.env.NODE_ENV != 'production' ? BNB_NETWORK.testnet : BNB_NETWORK.mainnet);
 const CONTRACT_ADDRESS = process.env.NET_WORK === "ETH" ? ETH_CONTRACT_ADDRESS : BNB_CONTRACT_ADDRESS;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
