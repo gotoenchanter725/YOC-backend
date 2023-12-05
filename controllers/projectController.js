@@ -24,7 +24,8 @@ const create = async (req, res) => {
                 ptokenSymbol: data.projectTitle,
                 ptokenSellAmount: data.sellAmount,
                 ptokenPoolAmount: data.sellAmount,
-                ptokenPrice: 1 / Number(data.price)
+                ptokenPrice: 1 / Number(data.price),
+                endDate: new Date(Number(data.endDate))
             });
             monitorProject(project);
 

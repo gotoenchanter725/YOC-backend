@@ -174,7 +174,7 @@ const allTradeProject = async (req, res) => {
         const currentDate = new Date(), sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         const oneDayAgo = new Date();
-        oneDayAgo.setDate(oneDayAgo.getDate() - 7);
+        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
         projects.forEach(async (project) => {
             if (Number(project.ptokenPoolAmount) > 0) return;
             // total: project.ptokenTotoalSupply
@@ -273,7 +273,6 @@ const tradePriceBetweenDates = async (startDate, endDate, projectInfo, nuance = 
             }
         });
         let iterationDate = new Date(startDate);
-        iterationDate.setHours(0, 0, 0, 0);
         while (iterationDate <= endDate) {
             let pricesByIterationDate = [...prices.filter((price) => {
                 return +iterationDate < +new Date(price.createdAt) && +new Date(price.createdAt) < +iterationDate + nuance
@@ -552,7 +551,6 @@ const pricesByPtokenAddress = async (req, res) => {
         })
         let currentDate = new Date();
         let periodAgo = new Date(+currentDate - period);
-        periodAgo.setHours(0, 0, 0, 0);
         if (project) {
             let prices = await tradePriceBetweenDates(periodAgo, currentDate, project, period / 30)
             res.status(200).json({

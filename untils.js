@@ -14,9 +14,11 @@ const convertWeiToEth = function (wei, decimals) {
 }
 
 const getProvider = function () {
-    if (NETWORK.wss.indexOf("wss://") == -1) {
-        return getWebSocketProvider()
-    } else return getJsonProvider();
+    // if (NETWORK.wss.indexOf("wss://") != -1) {
+    //     return getWebSocketProvider()
+    // } else {
+    return getJsonProvider();
+    // }
 }
 
 const getJsonProvider = function () {

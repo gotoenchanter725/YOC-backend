@@ -6,8 +6,8 @@ const app = express();
 app.use(logger('dev'));
 
 const db = require('./models');
-db.sequelize.sync({ force: true }).then(() => {
-    // db.sequelize.sync({}).then(() => {
+// db.sequelize.sync({ force: true }).then(() => {
+db.sequelize.sync({}).then(() => {
     console.log("Synced db.");
 }).catch((err) => {
     console.log("Falied to sync db: " + err.message);
