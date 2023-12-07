@@ -273,7 +273,7 @@ const tradePriceBetweenDates = async (startDate, endDate, projectInfo, nuance = 
             }
         });
         let iterationDate = new Date(startDate);
-        while (iterationDate <= endDate) {
+        while (iterationDate < endDate) {
             let pricesByIterationDate = [...prices.filter((price) => {
                 return +iterationDate < +new Date(price.createdAt) && +new Date(price.createdAt) < +iterationDate + nuance
             })]
@@ -293,6 +293,25 @@ const tradePriceBetweenDates = async (startDate, endDate, projectInfo, nuance = 
             prevPrice = averagePrice;
             iterationDate = new Date(+iterationDate + nuance);
         }
+        if (prices.length == 0) {
+            const latestPrice = await TradePrice.findOne({
+                where: {
+                    ptokenAddress: {
+                        [Op.like]: projectInfo.ptokenAddress.toLowerCase()
+                    }
+                },
+                order: [['createdAt', 'DESC']]
+            })
+            data.push({
+                value: latestPrice.price,
+                date: endDate
+            })
+        } else {
+            data.push({
+                value: prices[prices.length - 1].price,
+                date: endDate
+            })
+        }
         let startPrice = data.length ? data[0].value : 0;
         if (startPrice == 0) {
             startPrice = projectInfo.ptokenPrice
@@ -301,10 +320,10 @@ const tradePriceBetweenDates = async (startDate, endDate, projectInfo, nuance = 
         return {
             nuance: nuanceToPercentage(startPrice, endPrice),
             data: data,
-            average: data.reduce((prev, p) => p.value + prev, 0) / data.length
+            average: data.reduce((prev, p) => Number(p.value) + Number(prev), 0) / data.length
         };
     } catch (err) {
-        console.log('tradePriceBetweenDates: ', err.message)
+        console.log('tradePriceBetweenDates: ', err)
     }
 }
 
