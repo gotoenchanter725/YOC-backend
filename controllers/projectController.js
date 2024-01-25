@@ -1,7 +1,8 @@
+const { Contract, ethers } = require('ethers');
+const { Op } = require('sequelize');
 const { Project, TradePrice } = require('../models');
 const { TokenTemplate, Project: projectAbi, ProjectManager, ProjectTrade, PRIVATE_KEY, YUSD } = require("../config/contracts");
 const { getProvider, delay, convertWeiToEth, convertEthToWei } = require('../untils');
-const { Contract, ethers } = require('ethers');
 
 
 // Create New Project
@@ -25,7 +26,9 @@ const create = async (req, res) => {
                 ptokenSellAmount: data.sellAmount,
                 ptokenPoolAmount: data.sellAmount,
                 ptokenPrice: 1 / Number(data.price),
-                endDate: new Date(Number(data.endDate))
+                endDate: new Date(Number(data.endDate)),
+                multiplier: multiplier,
+                projectWallet: date.projectWallet,
             });
             monitorProject(project);
 
@@ -102,7 +105,9 @@ const monitorProject = (projectInfo) => {
                 ptokenPoolAmount: currentPollAmount
             }, {
                 where: {
-                    address: projectInfo.address
+                    address: {
+                        [Op.like]: projectInfo.address
+                    }
                 }
             });
             console.log(`<== monitorProject: Participated: updated pull amount ${currentPollAmount} ==>`);
@@ -115,7 +120,9 @@ const monitorProject = (projectInfo) => {
                 ptokenPoolAmount: currentPollAmount
             }, {
                 where: {
-                    address: projectInfo.address
+                    address: {
+                        [Op.like]: projectInfo.address
+                    }
                 }
             });
             console.log(`<== monitorProject: Refund: updated pull amount ${currentPollAmount} ==>`);
@@ -125,7 +132,61 @@ const monitorProject = (projectInfo) => {
     }
 }
 
+const getTime = (req, res) => {
+    console.log(new Date())
+    // Get the current date
+    const date = new Date();
+
+    // Get the timezone offset in minutes
+    const timezoneOffsetInMinutes = date.getTimezoneOffset();
+
+    // Convert the offset to hours and minutes
+    const timezoneOffsetInHours = Math.abs(timezoneOffsetInMinutes) / 60;
+    const timezoneOffsetHours = Math.floor(timezoneOffsetInHours);
+    const timezoneOffsetMinutes = Math.abs(timezoneOffsetInMinutes) % 60;
+
+    // Determine the sign (to represent ahead or behind UTC)
+    const sign = timezoneOffsetInMinutes > 0 ? '-' : '+';
+
+    // Create the formatted timezone string
+    const timezoneString = `UTC${sign}${timezoneOffsetHours.toString().padStart(2, '0')}:${timezoneOffsetMinutes.toString().padStart(2, '0')}`;
+
+    console.log(timezoneString);
+
+    return res.status(200).json({
+        status: true,
+        data: {
+            timezone: timezoneString,
+            time: Date.now(),
+            value: new Date()
+        },
+        message: "server time"
+    });
+}
+
+const getDetails = async (req, res) => {
+    let data = req.query;
+    try {
+        let project = await Project.findOne({
+            where: {
+                ptokenAddress: {
+                    [Op.like]: data.ptokenAddress
+                }
+            }
+        })
+        res.status(200).json({
+            state: true,
+            data: project
+        })
+    } catch (error) {
+        console.log('getDetails', error);
+        return res.status(500).json({ error: error.message })
+    }
+}
+
 module.exports = {
     create,
-    scanMonitorProjects
+    scanMonitorProjects,
+    getDetails,
+    getTime
 }

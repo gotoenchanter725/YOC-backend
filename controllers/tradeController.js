@@ -312,11 +312,12 @@ const tradePriceBetweenDates = async (startDate, endDate, projectInfo, nuance = 
                 date: endDate
             })
         }
-        let startPrice = data.length ? data[0].value : 0;
-        if (startPrice == 0) {
-            startPrice = projectInfo.ptokenPrice
-        }
+        let startPrice = data.length > 1 ? data[0].value : 0;
+        // if (startPrice == 0) {
+        //     startPrice = projectInfo.ptokenPrice
+        // }
         let endPrice = data.length ? data[data.length - 1].value : 0;
+        console.log(startPrice, endPrice);
         return {
             nuance: nuanceToPercentage(startPrice, endPrice),
             data: data,
@@ -324,6 +325,36 @@ const tradePriceBetweenDates = async (startDate, endDate, projectInfo, nuance = 
         };
     } catch (err) {
         console.log('tradePriceBetweenDates: ', err)
+    }
+}
+
+const checkPriceIsRaise = async (projectInfo) => {
+    try {
+        const latestPrice = await TradePrice.findOne({
+            where: {
+                ptokenAddress: {
+                    [Op.like]: projectInfo.ptokenAddress.toLowerCase()
+                }
+            },
+            order: [['createdAt', 'DESC']]
+        })
+        const preLatestPrice = await TradePrice.findOne({
+            where: {
+                ptokenAddress: {
+                    [Op.like]: projectInfo.ptokenAddress.toLowerCase()
+                },
+                price: {
+                    [Op.ne]: latestPrice.price
+                }
+            },
+            order: [['createdAt', 'DESC']]
+        })
+        if (preLatestPrice) {
+            return Number(latestPrice.price) > Number(preLatestPrice.price)
+        } else return true;
+    } catch (error) {
+        console.log('checkPriceIsRaise', error);
+        return true;
     }
 }
 
@@ -516,9 +547,10 @@ const projectDetailByPtokenAddress = async (req, res) => {
         const currentDate = new Date();
         const oneDayAgo = new Date();
         oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-        let pricesFor1d = [];
+        let pricesFor1d = [], isRaise = true;
         if (project) {
             pricesFor1d = await tradePriceBetweenDates(oneDayAgo, currentDate, project, oneDay / 30);
+            isRaise = await checkPriceIsRaise(project);
         } else throw "No project";
 
         let latestPrice = project.ptokenPrice;
@@ -547,7 +579,8 @@ const projectDetailByPtokenAddress = async (req, res) => {
                 project,
                 pricesFor1d,
                 orders,
-                latestPrice
+                latestPrice,
+                isRaise
             }
         })
     } catch (err) {
@@ -616,7 +649,7 @@ const allTransactionByOrderId = async (req, res) => {
     }
 }
 
-const variationByPtokenAddressAndPeriod = async (req, res) => {
+const volumeByPtokenAddressForPeriod = async (req, res) => {
     try {
         const { period, ptokenAddress } = req.query;
         let currentDate = new Date(), periodAgo = new Date();
@@ -641,6 +674,6 @@ module.exports = {
     tradedYUSDByAddress,
     monitorProjectTrade,
     pricesByPtokenAddress,
-    variationByPtokenAddressAndPeriod,
+    volumeByPtokenAddressForPeriod,
     allTransactionByOrderId
 }

@@ -72,6 +72,6 @@ app.listen(PORT, () => {
     // scanMonitorFarms();
     // scanMonitorStakes();
     // monitorYUSD();
-    monitorProjectTrade();
-    scanMonitorProjects();
+    // monitorProjectTrade();
+    // scanMonitorProjects();
 });

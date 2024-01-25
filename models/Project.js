@@ -7,7 +7,14 @@ module.exports = (sequelize, DataTypes) => {
     },
     iconUrl: DataTypes.STRING,
     address: DataTypes.STRING,
+    multiplier: DataTypes.INTEGER,
+    status: DataTypes.STRING,
     ptokenAddress: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true
+    },
+    projectWallet: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true
@@ -25,6 +32,14 @@ module.exports = (sequelize, DataTypes) => {
     ptokenTradeBalance: {
       type: DataTypes.STRING,
       defaultValue: "0"
+    },
+    tradePause: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+    manuallySecondaryMarketplace: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     },
     endDate: DataTypes.DATE,
     isDeleted: {
