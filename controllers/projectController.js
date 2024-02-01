@@ -1,68 +1,69 @@
-const { Contract, ethers } = require('ethers');
+const { Contract, ethers, constants } = require('ethers');
+const { AddressZero } = constants;
 const { Op } = require('sequelize');
 const { Project, TradePrice } = require('../models');
-const { TokenTemplate, Project: projectAbi, ProjectManager, ProjectTrade, PRIVATE_KEY, YUSD } = require("../config/contracts");
+const { TokenTemplate, Project: projectAbi, ProjectManager, ProjectTrade, PRIVATE_KEY, YUSD, YOCFarm, ProjectDetail } = require("../config/contracts");
 const { getProvider, delay, convertWeiToEth, convertEthToWei } = require('../untils');
 
 
-// Create New Project
-const create = async (req, res) => {
-    try {
-        let data = req.body;
-        let current = await Project.findOne({
-            where: {
-                projectTitle: data.projectTitle
-            }
-        })
-        if (!current) {
-            const project = await Project.create({
-                projectTitle: data.projectTitle,
-                iconUrl: data.iconUrl,
-                address: data.address,
-                ptokenAddress: data.ptokenAddress,
-                ptokenDecimals: data.decimals,
-                ptokenTotalSupply: data.totalSupuply,
-                ptokenSymbol: data.projectTitle,
-                ptokenSellAmount: data.sellAmount,
-                ptokenPoolAmount: data.sellAmount,
-                ptokenPrice: 1 / Number(data.price),
-                endDate: new Date(Number(data.endDate)),
-                multiplier: multiplier,
-                projectWallet: date.projectWallet,
-            });
-            monitorProject(project);
+// // Create New Project
+// const create = async (req, res) => {
+//     try {
+//         let data = req.body;
+//         let current = await Project.findOne({
+//             where: {
+//                 projectTitle: data.projectTitle
+//             }
+//         })
+//         if (!current) {
+//             const project = await Project.create({
+//                 projectTitle: data.projectTitle,
+//                 iconUrl: data.iconUrl,
+//                 address: data.address,
+//                 ptokenAddress: data.ptokenAddress,
+//                 ptokenDecimals: data.decimals,
+//                 ptokenTotalSupply: data.totalSupuply,
+//                 ptokenSymbol: data.projectTitle,
+//                 ptokenSellAmount: data.sellAmount,
+//                 ptokenPoolAmount: data.sellAmount,
+//                 ptokenPrice: 1 / Number(data.price),
+//                 endDate: new Date(Number(data.endDate)),
+//                 multiplier: multiplier,
+//                 projectWallet: date.projectWallet,
+//             });
+//             monitorProject(project);
 
-            // const newTradePrice = await TradePrice.create({
-            //     ptokenAddress: data.ptokenAddress,
-            //     price: data.price,
-            //     timestamp: String(+new Date())
-            // })
+//             // const newTradePrice = await TradePrice.create({
+//             //     ptokenAddress: data.ptokenAddress,
+//             //     price: data.price,
+//             //     timestamp: String(+new Date())
+//             // })
 
-            const signer = new ethers.Wallet(PRIVATE_KEY, getProvider());
-            let ProjectTradeContract = new Contract(
-                ProjectTrade.address,
-                ProjectTrade.abi,
-                signer
-            )
-            // when create new project, set the price in trade project
-            console.log('price::', convertEthToWei(1 / data.price, YUSD.decimals));
-            let tx = await ProjectTradeContract.setPriceByAdmin(data.ptokenAddress, convertEthToWei(1 / data.price, YUSD.decimals), {
-                gasLimit: 75000
-            });
-            await tx.wait();
-            return res.status(201).json({
-                project,
-            });
-        } else {
-            return res.status(204).json({
-                state: "The project is already existed"
-            });
-        }
-    } catch (error) {
-        console.log(`<== Project create: error ${error} ==>`)
-        return res.status(500).json({ error: error.message })
-    }
-};
+//             const signer = new ethers.Wallet(PRIVATE_KEY, getProvider());
+//             let ProjectTradeContract = new Contract(
+//                 ProjectTrade.address,
+//                 ProjectTrade.abi,
+//                 signer
+//             )
+//             // when create new project, set the price in trade project
+//             console.log('price::', convertEthToWei(1 / data.price, YUSD.decimals));
+//             let tx = await ProjectTradeContract.setPriceByAdmin(data.ptokenAddress, convertEthToWei(1 / data.price, YUSD.decimals), {
+//                 gasLimit: 75000
+//             });
+//             await tx.wait();
+//             return res.status(201).json({
+//                 project,
+//             });
+//         } else {
+//             return res.status(204).json({
+//                 state: "The project is already existed"
+//             });
+//         }
+//     } catch (error) {
+//         console.log(`<== Project create: error ${error} ==>`)
+//         return res.status(500).json({ error: error.message })
+//     }
+// };
 
 const scanMonitorProjects = async () => {
     try {
@@ -72,12 +73,53 @@ const scanMonitorProjects = async () => {
             ProjectManager.abi,
             getProvider()
         )
+        const projectDetailContract = new Contract(
+            ProjectDetail.address,
+            ProjectDetail.abi,
+            getProvider()
+        )
+
+        const signer = new ethers.Wallet(PRIVATE_KEY, getProvider());
+        let ProjectTradeContract = new Contract(
+            ProjectTrade.address,
+            ProjectTrade.abi,
+            signer
+        )
+
         console.log(`<== scanMonitorProjects and monitor project manager ==>`)
         projects.forEach(pItem => {
             monitorProject(pItem);
         });
-        projectManagerContract.on('DeployedNewProject', (userAddress, contractAddress, ptokenAddress) => {
+        projectManagerContract.on('DeployedNewProject', async (userAddress, contractAddress, ptokenAddress) => {
             console.log(`<== scanMonitorProjects: DeployedNewProject (${userAddress}, ${contractAddress}, ${ptokenAddress}) ==>`);
+
+            let detail = await projectDetailContract.getProjectDetails(String(contractAddress, AddressZero));
+            const shareTokenDecimals = Number(detail.shareToken.decimals);
+            const shareTokenPrice = Number(ethers.utils.formatUnits(detail.project.shareTokenPrice, shareTokenDecimals));
+            const project = await Project.create({
+                projectTitle: detail.project.title,
+                iconUrl: detail.project.icon,
+                address: String(contractAddress),
+                ptokenAddress: detail.shareToken.tokenAddress,
+                ptokenDecimals: shareTokenDecimals,
+                ptokenTotalSupply: detail.shareToken.totalSupuply,
+                ptokenSymbol: detail.shareToken.symbol,
+                ptokenSellAmount: Number(ethers.utils.formatUnits(detail.shareToken.sellAmount, shareTokenDecimals)),
+                ptokenPoolAmount: Number(ethers.utils.formatUnits(detail.shareToken.remainingBalanceOfProject, shareTokenDecimals)),
+                ptokenPrice: 1 / shareTokenPrice, // 1 ShareToken = 1 / shareTokenPrice YUSD
+                endDate: new Date(Number(detail.project.endDate)),
+                multiplier: detail.project.multiplier,
+                projectWallet: date.project.projectWallet,
+                poolId: date.project.pId
+            });
+            monitorProject(project);
+
+            // when create new project, set the price in trade project
+            console.log('price::', convertEthToWei(shareTokenPrice, YUSD.decimals));
+            let tx = await ProjectTradeContract.setPriceByAdmin(data.ptokenAddress, convertEthToWei(1 / shareTokenPrice, YUSD.decimals), {
+                gasLimit: 75000
+            });
+            await tx.wait();
         })
     } catch (err) {
         console.log('<== scanMonitorProjects: Error ==>', err.message);
@@ -184,9 +226,68 @@ const getDetails = async (req, res) => {
     }
 }
 
+const updateMultiplier = async (req, res) => {
+    try {
+        let { pId, multiplier, projectAddress } = req.body;
+        if (multiplier) {
+            const signer = new ethers.Wallet(PRIVATE_KEY, getProvider());
+            const gasPrice = await getProvider().getGasPrice();
+            console.log("stake-addstake gasPrice", gasPrice.toString());
+
+            let projectContract;
+            if (projectAddress) {
+                projectContract = new Contract(projectAddress, projectAbi.abi, signer);
+                pId = await projectContract.pId();
+            } else if (!pId) {
+                throw Error(message = "invalid pId");
+            }
+
+            const YocFarmContract = new Contract(YOCFarm.address, YOCFarm.abi, signer);
+            const updateMultiplierTx = await YocFarmContract.set(pId, multiplier, false, {
+                gasLimit: 300000
+            });
+            await updateMultiplierTx.wait();
+
+            if (projectAddress) {
+                // const tx = await projectContract.updateMultiplier(Number(multiplier), {
+                //     gasLimit: 75000
+                // });
+                // await tx.wait();
+            }
+            res.status(200).json({
+                state: true
+            });
+        } else {
+            throw Error(message = "projectAddress or multiplier is invalid")
+        }
+    } catch (error) {
+        console.log('project updateMultiplier:', error);
+        return res.status(500).json({ error: error.message })
+    }
+}
+
+const test = async (req, res) => {
+    let project = await Project.findOne({
+        where: {
+            poolId: Number(0)
+        }
+    })
+    if (project) {
+        project.multiplier = 10;
+        await project.save();
+        res.status(200).json({
+            state: true
+        });
+    } else {
+        return res.status(500).json({ error: "error.message" })
+    }
+}
+
 module.exports = {
-    create,
+    // create,
     scanMonitorProjects,
     getDetails,
-    getTime
+    getTime,
+    updateMultiplier,
+    test
 }

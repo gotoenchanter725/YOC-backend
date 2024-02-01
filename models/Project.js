@@ -7,6 +7,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     iconUrl: DataTypes.STRING,
     address: DataTypes.STRING,
+    poolId: DataTypes.INTEGER,
     multiplier: DataTypes.INTEGER,
     status: DataTypes.STRING,
     ptokenAddress: {

@@ -3,7 +3,7 @@ const { Contract, BigNumber, constants, utils, ethers } = require('ethers');
 const { MaxUint256, AddressZero, Zero } = constants;
 const { YOCSwapFactory, YOC, USDCToken, YOCSwapRouter, YOCPair, YOCFarm, TokenTemplate, YOCPool, PRIVATE_KEY } = require("../config/contracts");
 
-const { Liquidity, FarmDetail, Currency, FarmPool } = require('../models');
+const { Liquidity, FarmDetail, Currency, FarmPool, Project, StakePool } = require('../models');
 const { AdminWalletAddress } = require('../config/contracts');
 
 const allFarms = async (req, res) => {
@@ -187,13 +187,15 @@ const scanMonitorFarms = async () => {
             await updateSpecialFarm(poolInfo, item.poolId);
         });
 
-        await YOCFarmContract.on('Deposit', async (sender, pId, amount) => {
+        YOCFarmContract.on('Deposit', async (sender, pId, amount) => {
+            console.log("farm-scanFarms Deposit", `${sender}, ${pId}, ${amount}`)
             let poolInfo = await YOCFarmContract.poolInfo(pId);
             await updateSpecialFarm(poolInfo, pId);
 
             await updateFarmDetailsByUser(sender, pId, YOCFarmContract);
         })
-        await YOCFarmContract.on('Withdraw', async (sender, pId, amount, yocAmount) => {
+        YOCFarmContract.on('Withdraw', async (sender, pId, amount, yocAmount) => {
+            console.log("farm-scanFarms Withdraw", `${sender}, ${pId}, ${amount}, ${yocAmount}`)
             let poolInfo = await YOCFarmContract.poolInfo(pId);
             await updateSpecialFarm(poolInfo, pId);
 
@@ -201,8 +203,9 @@ const scanMonitorFarms = async () => {
         })
 
 
-        await YOCFarmContract.on('AddPool', async (pId, allocPoint, pairAddress, isYoc) => {
+        YOCFarmContract.on('AddPool', async (pId, allocPoint, pairAddress, isYoc) => {
             console.log("farm-scanFarms", "<=========Farm&Stake Add Pool=======>")
+            console.log("farm-scanFarms AddPool", `${pId}, ${allocPoint}, ${pairAddress}, ${isYoc}`)
             let poolInfo = await YOCFarmContract.poolInfo(pId);
 
             const liquidity = await Liquidity.findOne({
@@ -224,6 +227,42 @@ const scanMonitorFarms = async () => {
             } else {
                 // Stake Pool Added
                 console.log("farm-scanFarms", '<============= Stake Pool Added ===========>')
+            }
+        })
+
+        YOCFarmContract.on('SetPool', async (pId, multiplier) => {
+            console.log("farm-scanFarms SetPool", `${pId}, ${multiplier}`);
+            let project = await Project.findOne({
+                where: {
+                    poolId: Number(pId)
+                }
+            })
+            if (project) {
+                console.log("farm-scanFarms SetPool Update Project poolId")
+                project.multiplier = Number(multiplier);
+                await project.save();
+            } else {
+                let farmPool = await FarmPool.findOne({
+                    where: {
+                        poolId: Number(pId)
+                    }
+                })
+                if (farmPool) {
+                    console.log("farm-scanFarms SetPool Update Farm poolId")
+                    farmPool.allocPoint = Number(multiplier);
+                    await farmPool.save();
+                } else {
+                    let stakePool = await StakePool.findOne({
+                        where: {
+                            poolId: Number(pId)
+                        }
+                    })
+                    if (stakePool) {
+                        console.log("farm-scanFarms SetPool Update Stake poolId")
+                        stakePool.allocPoint = Number(multiplier);
+                        await stakePool.save();
+                    }
+                }
             }
         })
     } catch (err) {
