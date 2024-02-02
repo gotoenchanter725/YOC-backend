@@ -249,10 +249,10 @@ const updateMultiplier = async (req, res) => {
             await updateMultiplierTx.wait();
 
             if (projectAddress) {
-                // const tx = await projectContract.updateMultiplier(Number(multiplier), {
-                //     gasLimit: 75000
-                // });
-                // await tx.wait();
+                const tx = await projectContract.updateMultiplier(Number(multiplier), {
+                    gasLimit: 300000
+                });
+                await tx.wait();
             }
             res.status(200).json({
                 state: true
