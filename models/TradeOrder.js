@@ -12,6 +12,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.BOOLEAN,
             defaultValue: false
         },
+        isRemoved: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
         isBuy: {
             type: DataTypes.BOOLEAN,
             defaultValue: true

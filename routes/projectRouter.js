@@ -7,6 +7,6 @@ const projectController = require('../controllers/projectController');
 router.get('/', projectController.getDetails);
 router.get('/time', projectController.getTime);
 router.post('/updateMultiplier', projectController.updateMultiplier);
-router.post('/test', projectController.test);
+router.post('/test', projectController.testFunction);
 
 module.exports = router;

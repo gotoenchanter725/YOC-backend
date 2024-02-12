@@ -93,7 +93,7 @@ const scanMonitorProjects = async () => {
         projectManagerContract.on('DeployedNewProject', async (userAddress, contractAddress, ptokenAddress) => {
             console.log(`<== scanMonitorProjects: DeployedNewProject (${userAddress}, ${contractAddress}, ${ptokenAddress}) ==>`);
 
-            let detail = await projectDetailContract.getProjectDetails(String(contractAddress, AddressZero));
+            let detail = await projectDetailContract.getProjectDetails(String(contractAddress), AddressZero);
             const shareTokenDecimals = Number(detail.shareToken.decimals);
             const shareTokenPrice = Number(ethers.utils.formatUnits(detail.project.shareTokenPrice, shareTokenDecimals));
             const project = await Project.create({
@@ -109,14 +109,14 @@ const scanMonitorProjects = async () => {
                 ptokenPrice: 1 / shareTokenPrice, // 1 ShareToken = 1 / shareTokenPrice YUSD
                 endDate: new Date(Number(detail.project.endDate)),
                 multiplier: detail.project.multiplier,
-                projectWallet: date.project.projectWallet,
-                poolId: date.project.pId
+                projectWallet: detail.project.projectWallet,
+                poolId: detail.project.pId
             });
             monitorProject(project);
 
             // when create new project, set the price in trade project
             console.log('price::', convertEthToWei(shareTokenPrice, YUSD.decimals));
-            let tx = await ProjectTradeContract.setPriceByAdmin(data.ptokenAddress, convertEthToWei(1 / shareTokenPrice, YUSD.decimals), {
+            let tx = await ProjectTradeContract.setPriceByAdmin(detail.shareToken.tokenAddress, convertEthToWei(1 / shareTokenPrice, YUSD.decimals), {
                 gasLimit: 75000
             });
             await tx.wait();
@@ -124,6 +124,49 @@ const scanMonitorProjects = async () => {
     } catch (err) {
         console.log('<== scanMonitorProjects: Error ==>', err.message);
     }
+}
+
+const testFunction = async () => {
+    const projectDetailContract = new Contract(
+        ProjectDetail.address,
+        ProjectDetail.abi,
+        getProvider()
+    )
+    const signer = new ethers.Wallet(PRIVATE_KEY, getProvider());
+    let ProjectTradeContract = new Contract(
+        ProjectTrade.address,
+        ProjectTrade.abi,
+        signer
+    )
+
+    let userAddress = '', contractAddress = '0xdB6376ee716e2035a3427c8D294e810EcC9c6A2E', ptokenAddress = '';
+    let detail = await projectDetailContract.getProjectDetails(String(contractAddress), AddressZero);
+    const shareTokenDecimals = Number(detail.shareToken.decimals);
+    const shareTokenPrice = Number(ethers.utils.formatUnits(detail.project.shareTokenPrice, shareTokenDecimals));
+    const project = await Project.create({
+        projectTitle: detail.project.title,
+        iconUrl: detail.project.icon,
+        address: String(contractAddress),
+        ptokenAddress: detail.shareToken.tokenAddress,
+        ptokenDecimals: shareTokenDecimals,
+        ptokenTotalSupply: detail.shareToken.totalSupuply,
+        ptokenSymbol: detail.shareToken.symbol,
+        ptokenSellAmount: Number(ethers.utils.formatUnits(detail.shareToken.sellAmount, shareTokenDecimals)),
+        ptokenPoolAmount: Number(ethers.utils.formatUnits(detail.shareToken.remainingBalanceOfProject, shareTokenDecimals)),
+        ptokenPrice: 1 / shareTokenPrice, // 1 ShareToken = 1 / shareTokenPrice YUSD
+        endDate: new Date(Number(detail.project.endDate)),
+        multiplier: detail.project.multiplier,
+        projectWallet: detail.project.projectWallet,
+        poolId: detail.project.pId
+    });
+    monitorProject(project);
+
+    // when create new project, set the price in trade project
+    console.log('price::', convertEthToWei(shareTokenPrice, YUSD.decimals));
+    let tx = await ProjectTradeContract.setPriceByAdmin(detail.shareToken.tokenAddress, convertEthToWei(1 / shareTokenPrice, YUSD.decimals), {
+        gasLimit: 75000
+    });
+    await tx.wait();
 }
 
 const monitorProject = (projectInfo) => {
@@ -266,28 +309,11 @@ const updateMultiplier = async (req, res) => {
     }
 }
 
-const test = async (req, res) => {
-    let project = await Project.findOne({
-        where: {
-            poolId: Number(0)
-        }
-    })
-    if (project) {
-        project.multiplier = 10;
-        await project.save();
-        res.status(200).json({
-            state: true
-        });
-    } else {
-        return res.status(500).json({ error: "error.message" })
-    }
-}
-
 module.exports = {
     // create,
     scanMonitorProjects,
     getDetails,
     getTime,
     updateMultiplier,
-    test
+    testFunction
 }

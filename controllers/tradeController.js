@@ -155,6 +155,25 @@ const monitorProjectTrade = async () => {
                 console.log(`<== monitorProjectTrade CancelOrder Err: ${err} ==>`)
             }
         });
+
+        ProjectTradeContract.on("RemoveOrder", async (pToken, orderId) => {
+            try {
+                console.log(`<== monitorProjectTrade RemoveOrder: (${pToken}, ${orderId}) ==>`);
+                await TradeOrder.update({
+                    isRemoved: true
+                }, {
+                    where: {
+                        ptokenAddress: {
+                            [Op.like]: String(pToken).toLowerCase()
+                        },
+                        orderId: Number(orderId)
+                    }
+                })
+                updatePtokenOfTradeProject(String(pToken));
+            } catch (err) {
+                console.log(`<== monitorProjectTrade RemoveOrder Err: ${err} ==>`)
+            }
+        });
     } catch (err) {
         console.log('<== monitorProjectTrade: Error ==>', err)
     }
@@ -168,7 +187,7 @@ const allTradeProject = async (req, res) => {
             order: [['createdAt', 'ASC']]
         }, {
             where: {
-                ptokenPoolAmount: "0"
+                ptokenPoolAmount: "0.0"
             }
         })
         const currentDate = new Date(), sevenDaysAgo = new Date();
@@ -225,7 +244,8 @@ const tradePtokenBalanceByAddress = async (pToken, address) => {
                 },
                 userAddress: {
                     [Op.like]: address.toLowerCase()
-                }
+                },
+                isRemoved: false
             },
             order: [['createdAt', 'ASC']],
         });
@@ -451,7 +471,8 @@ const allTradeOrdersByAddress = async (req, res) => {
             where: {
                 userAddress: {
                     [Op.like]: address.toLowerCase()
-                }
+                },
+                isRemoved: false
             },
             order: [['createdAt', 'ASC']],
         });
@@ -510,7 +531,8 @@ const tradedYUSDByAddress = async (req, res) => {
             where: {
                 userAddress: {
                     [Op.like]: address.toLowerCase()
-                }
+                },
+                isRemoved: false
             },
             order: [['createdAt', 'ASC']],
         });
@@ -568,7 +590,8 @@ const projectDetailByPtokenAddress = async (req, res) => {
             where: {
                 ptokenAddress: {
                     [Op.like]: ptokenAddress.toLowerCase()
-                }
+                },
+                isRemoved: false
             },
             order: [['createdAt', 'ASC']],
         });

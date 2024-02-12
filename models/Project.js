@@ -17,8 +17,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     projectWallet: {
       type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
+      allowNull: false
     },
     ptokenDecimals: DataTypes.INTEGER,
     ptokenSymbol: DataTypes.STRING,
