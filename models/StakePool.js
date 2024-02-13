@@ -35,7 +35,7 @@ module.exports = (sequelize, DataTypes) => {
 
     StakePoolModel.associate = function (models) {
         StakePoolModel.belongsTo(models.Currency, { as: 'currency', foreignKey: 'token' });
-        StakePoolModel.hasOne(models.StakeDetail, { foreignKey: 'id' });
+        StakePoolModel.hasOne(models.StakeDetail, { foreignKey: 'stakeId' });
     };
 
     return StakePoolModel;

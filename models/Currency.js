@@ -23,8 +23,8 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   CurrencyModel.associate = function (models) {
-    CurrencyModel.hasOne(models.Liquidity, { foreignKey: 'id' });
-    CurrencyModel.hasOne(models.StakePool, { foreignKey: 'id' });
+    // CurrencyModel.hasOne(models.Liquidity, { foreignKey: 'id' });
+    CurrencyModel.hasOne(models.StakePool, { foreignKey: 'token' });
   }
 
   return CurrencyModel;
