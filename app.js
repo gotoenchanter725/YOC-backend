@@ -68,10 +68,10 @@ app.listen(PORT, () => {
 
     // storeYocPricePerHour();
     // storeTVLPerHour();
-    // scanMonitorLiquidities();
-    // scanMonitorFarms();
-    // scanMonitorStakes();
-    // monitorYUSD();
-    // monitorProjectTrade();
-    // scanMonitorProjects();
+    scanMonitorLiquidities();
+    scanMonitorFarms();
+    scanMonitorStakes();
+    monitorYUSD();
+    monitorProjectTrade();
+    scanMonitorProjects();
 });
