@@ -1,5 +1,6 @@
 const { Currency } = require('../models');
 const { AdminWalletAddress } = require('../config/contracts');
+const { CONTRACT_ADDRESS } = require('../config/contract');
 
 const allCurrencies = async (req, res) => {
     const { account } = req.query;
@@ -7,8 +8,25 @@ const allCurrencies = async (req, res) => {
         const currencies = await Currency.findAll({
             // order: [['createdAt', 'ASC']]
         })
+
+        const currencyETH = await Currency.findOne({
+            where: {
+                address: CONTRACT_ADDRESS.WETH
+            }
+        })
+        let filterCurrencies = [];
+        if (currencyETH) {
+            console.log("GERE", currencyETH);
+            filterCurrencies = currencies.map((currency) => {
+                if (currency.address == CONTRACT_ADDRESS.WETH) return currency;
+                return {
+                    ...currency.dataValues,
+                    price: `${currency.price * currencyETH.price}`,
+                }
+            })
+        }
         return res.status(200).json({
-            currencies
+            currencies: filterCurrencies
         })
     } else {
         return res.status(500).json({ error: 'you are not admin' })
@@ -92,12 +110,28 @@ const stateCurrency = async (req, res) => {
 const viewAllCurrencies = async (req, res) => {
     const currencies = await Currency.findAll({
         where: {
-            isActive: true, 
+            isActive: true,
             isDelete: false
         }
     })
+    const currencyETH = await Currency.findOne({
+        where: {
+            address: CONTRACT_ADDRESS.WETH
+        }
+    })
+    let filterCurrencies = [];
+    if (currencyETH) {
+        console.log("GERE", currencyETH);
+        filterCurrencies = currencies.map((currency) => {
+            if (currency.address == CONTRACT_ADDRESS.WETH) return currency;
+            return {
+                ...currency.dataValues,
+                price: `${currency.price * currencyETH.price}`,
+            }
+        })
+    }
     return res.status(200).json({
-        currencies
+        currencies: filterCurrencies
     })
 }
 
