@@ -233,25 +233,6 @@ const scanMonitorLiquidities = async () => {
             })
             await pairContract.on('Swap', async (sender, in0, in1, out0, out1, to) => {
                 let liquidity = await updateSpecialLiquidity(pairContract, item);
-                if (liquidity.currency0.address == USDCToken.address) {
-                    const currency = await Currency.update({
-                        price: liquidity.rate
-                    }, {
-                        where: {
-                            address: liquidity.currency1.address
-                        }
-                    })
-                    console.log(`liquidity-scanMonitorLiquidities   Update USD price: ${liquidity.currency1.symbol} ${liquidity.rate}`);
-                } else if (liquidity.currency1.address == USDCToken.address) {
-                    const currency = await Currency.update({
-                        price: 1 / liquidity.rate
-                    }, {
-                        where: {
-                            address: liquidity.currency0.address
-                        }
-                    })
-                    console.log(`liquidity-scanMonitorLiquidities   Update USD price: ${liquidity.currency0.symbol} ${1 / liquidity.rate}`);
-                }
             })
         });
 
@@ -308,25 +289,6 @@ const scanMonitorLiquidities = async () => {
             })
             await pairContract.on('Swap', async (sender, in0, in1, out0, out1, to) => {
                 let liquidity = await updateSpecialLiquidity(pairContract, item);
-                if (liquidity.currency0.address == USDCToken.address) {
-                    const currency = await Currency.update({
-                        price: liquidity.rate
-                    }, {
-                        where: {
-                            address: liquidity.currency1.address
-                        }
-                    })
-                    console.log(`liquidity-scanMonitorLiquidities   Update USD price: ${liquidity.currency1.symbol} ${liquidity.rate}`);
-                } else if (liquidity.currency1.address == USDCToken.address) {
-                    const currency = await Currency.update({
-                        price: 1 / liquidity.rate
-                    }, {
-                        where: {
-                            address: liquidity.currency0.address
-                        }
-                    })
-                    console.log(`liquidity-scanMonitorLiquidities   Update USD price: ${liquidity.currency0.symbol} ${1 / liquidity.rate}`);
-                }
             })
         })
     } catch (err) {
