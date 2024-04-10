@@ -1,7 +1,7 @@
 const { delay, convertWeiToEth, convertEthToWei, getProvider } = require('../untils');
 const { Contract, BigNumber, constants, utils, ethers } = require('ethers');
 const { Price, FarmPool, StakePool, TotalValueLockPrice, Currency, Liquidity } = require('../models');
-const { ProjectManager, YOCSwapFactory, YOC, YUSD, USDCToken, YOCSwapRouter, YOCPair, TokenTemplate, YOCPool, Project } = require("../config/contracts");
+const { ProjectManager, YOCSwapFactory, YOC, YUSD, USDCToken, YOCSwapRouter, YOCPair, TokenTemplate, YOCPool, Project, WETH } = require("../config/contracts");
 const _ = require("lodash");
 var format = require('date-format');
 const { PRIVATE_KEY } = require('../config/contract');
@@ -339,6 +339,17 @@ const monitorYUSD = async () => {
                         });
                     }
                 }
+
+                // update ETH USD price
+                let USDPriceOfETH = ethers.utils.formatUnits(await YUSDContract.getETHPrice(), 6);
+                await Currency.update({
+                    price: USDPriceOfETH
+                }, {
+                    where: {
+                        address: WETH
+                    }
+                })
+                console.log("USDPriceOfETH", USDPriceOfETH);
                 await delay(1000 * 60 * 10); // 10mins
             } catch (err) {
                 console.log("YUSD: in while", err)

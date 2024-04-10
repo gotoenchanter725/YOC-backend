@@ -729,10 +729,8 @@ module.exports = {
     editLiquidity,
     deleteLiquidity,
     stateLiquidity,
-
-    getLiquidityPoolByTokens, 
-    getSwapPriceImpactByTokens, 
-    
+    getLiquidityPoolByTokens,
+    getSwapPriceImpactByTokens,
     viewAllLiquidities,
     rateLiquidity,
     scanMonitorLiquidities,
