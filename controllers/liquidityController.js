@@ -2,7 +2,7 @@ const { Op } = require('sequelize');
 const { delay, convertWeiToEth, convertEthToWei, getProvider } = require('../untils');
 const { Contract, BigNumber, constants, utils, ethers } = require('ethers');
 const { MaxUint256, AddressZero, Zero } = constants;
-const { YOCSwapFactory, YOC, USDCToken, YOCSwapRouter, YOCPair, TokenTemplate, YOCPool } = require("../config/contracts");
+const { YOCSwapFactory, WETH, YOC, USDCToken, YOCSwapRouter, YOCPair, TokenTemplate, YOCPool } = require("../config/contracts");
 
 const { Liquidity, LiquidityDetail, Currency } = require('../models');
 const { AdminWalletAddress } = require('../config/contracts');
