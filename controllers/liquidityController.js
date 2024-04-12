@@ -433,7 +433,7 @@ const updateSpecialLiquidity = async (pairContract, liquidityPairData) => {
         console.log(`liquidity-updateSpecialLiquidity              rate: ${rate}\n`);
 
 
-        if (liquidityPairData.currency0.address == USDCToken.address) {
+        if (liquidityPairData.currency0.address == WETH) {
             const currency = await Currency.update({
                 price: rate
             }, {
@@ -441,8 +441,8 @@ const updateSpecialLiquidity = async (pairContract, liquidityPairData) => {
                     address: liquidityPairData.currency1.address
                 }
             })
-            console.log(`liquidity-updateSpecialLiquidity  Update USD price: ${liquidityPairData.currency1.symbol} ${rate}`);
-        } else if (liquidityPairData.currency1.address == USDCToken.address) {
+            console.log(`liquidity-updateSpecialLiquidity  Update ETH Value: ${liquidityPairData.currency1.symbol} ${rate} ETH`);
+        } else if (liquidityPairData.currency1.address == WETH) {
             const currency = await Currency.update({
                 price: 1 / rate
             }, {
@@ -450,7 +450,7 @@ const updateSpecialLiquidity = async (pairContract, liquidityPairData) => {
                     address: liquidityPairData.currency0.address
                 }
             })
-            console.log(`liquidity-updateSpecialLiquidity  Update USD price: ${liquidityPairData.currency0.symbol} ${1 / rate}`);
+            console.log(`liquidity-updateSpecialLiquidity  Update ETH Value: ${liquidityPairData.currency0.symbol} ${1 / rate} ETH`);
         }
 
         return data;
